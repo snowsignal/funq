@@ -1,0 +1,36 @@
+start: top_level_stmt*
+
+top_level_stmt: region | function_def
+
+region: "region" string "," uint block
+
+type: /[^0-9]\w+\??/
+
+function_def: "func" f_ident "(" arg_list? ")" ("->" type)? block
+
+function_call: f_ident uint
+
+f_ident: ident
+
+v_ident: ident
+
+ident: /[^0-9]\w+/
+
+string: ESCAPED_STRING
+
+uint: /[0-9]+/
+
+arg_list: arg ("," arg)*
+
+arg: v_ident ":" type
+
+block: "{" stmt* "}"
+
+stmt: (function_call | return ) ";"
+
+return: "return" ident
+
+%import common.WS
+%import common.ESCAPED_STRING
+
+%ignore WS

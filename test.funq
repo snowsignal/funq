@@ -1,0 +1,4 @@
+func Add(asdf: QReg, asdf2: QReg) -> Int {
+  hadamard 1;
+  return asdf;
+}
