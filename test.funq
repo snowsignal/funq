@@ -1,4 +1,13 @@
-func Add(asdf: QReg, asdf2: QReg) -> Int {
-  hadamard 1;
-  return asdf;
+func Foo() -> Int {
+  qif ^000^ == something {
+    qif ^10^ == ^01^ {
+      hadamard(4+5,3+5);
+    }
+  }
 }
+
+func Bob() -> Bool {
+
+}
+
+func ASDF() -> asdf {}

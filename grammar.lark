@@ -2,19 +2,21 @@ start: top_level_stmt*
 
 top_level_stmt: region | function_def
 
-region: "region" string "," uint block
+region: "region" r_ident "<" uint ">" block
 
-type: /[^0-9]\w+\??/
+type: /[^0-9]\w+/ ("?")?
 
 function_def: "func" f_ident "(" arg_list? ")" ("->" type)? block
 
-function_call: f_ident uint
+function_call: f_ident "(" call_list ")"
 
-f_ident: ident
+call_list: expr ("," call_list)*
 
-v_ident: ident
+r_ident: /[^0-9\^]\w+/
 
-ident: /[^0-9]\w+/
+f_ident: /[^0-9\^]\w+/
+
+v_ident: /[^0-9\^]\w+/
 
 string: ESCAPED_STRING
 
@@ -26,9 +28,49 @@ arg: v_ident ":" type
 
 block: "{" stmt* "}"
 
-stmt: (function_call | return ) ";"
+stmt: (function_call | return | assignment ) ";" | if | qif
 
-return: "return" ident
+assignment: type v_ident "=" ()
+
+return: "return" expr
+
+expr: paren | mul | div | add | sub | v_ident | string | uint
+
+if: "if" b_expr block
+
+b_expr: eq | neq | greater | lesser
+
+eq: expr "==" expr
+
+neq: expr "!=" expr
+
+greater: expr ">" expr
+
+lesser: expr "<" expr
+
+paren: "(" expr ")"
+
+mul: expr "*" expr
+
+div: expr "/" expr
+
+add: expr "+" expr
+
+sub: expr "-" expr
+
+q_expr: q_eq | q_neq
+
+q_eq: q_var "==" q_var
+
+q_neq: q_var "!=" q_var
+
+q_lit: "^" qubit+ "^"
+
+q_var: q_lit | v_ident
+
+qif: "qif" q_expr block
+
+qubit: "0" | "1"
 
 %import common.WS
 %import common.ESCAPED_STRING

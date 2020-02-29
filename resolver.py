@@ -1,5 +1,5 @@
 from lark import Visitor
-from generation import State
+from ast import State
 
 class Resolver:
     def __init__(self, state):

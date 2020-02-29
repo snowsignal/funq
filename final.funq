@@ -1,0 +1,11 @@
+func optionalHadamard(q: Q, shouldHadamard: Bool) {
+    if shouldHadamard {
+        hadamard q;
+    }
+}
+
+region Main<10> {
+    Int b = 10;
+    Q register = ^0000000000^;
+    optionalHadamard(register, b == 10);
+}

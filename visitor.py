@@ -20,14 +20,22 @@ class Visitor(TreeTraversal):
     def _traverse(self, t):
         if isinstance(t, Token):
             return
+        self._process_tree(t)
         for child in t.children:
             self._traverse(child)
-        self._process_tree(t)
+        self._post_process_tree(t)
         return t
 
     def _process_tree(self, t):
         try:
             func = getattr(self, "visit_" + t.data)
+            func(t)
+        except (AttributeError, TypeError):
+            return
+
+    def _post_process_tree(self, t):
+        try:
+            func = getattr(self, "after_visit_" + t.data)
             func(t)
         except (AttributeError, TypeError):
             return
