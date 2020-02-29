@@ -39,12 +39,13 @@ class AST:
         self.context = self.top_level_scope
 
     def jump_super(self):
+        print("Jumping from " + self.context.data)
         if self.context.super_scope is not None:
             self.context = self.context.super_scope
 
     def jump_to(self, id) -> bool:
         s = self.context._scope_with_id(id)
-        print(s)
+        print("Entering " + s.data)
         if s is not None:
             self.context = s
             return True
@@ -139,6 +140,7 @@ class ASTBuilder(Visitor):
 
     def visit_expr(self, t):
         expr = t.children[0]
+        print("Visiting:", t)
         # There are many kinds of expressions. Check which one it is:
         if expr.data == "paren" \
             or expr.data == "v_ident" \
@@ -154,7 +156,14 @@ class ASTBuilder(Visitor):
         if not self.ast.jump_to(scope.ID):
             raise Exception("could not jump to scope")
 
-    def after_visit_expr(self, _):
+    def after_visit_expr(self, t):
+        expr = t.children[0]
+        if expr.data == "paren" \
+                or expr.data == "v_ident" \
+                or expr.data == "string" \
+                or expr.data == "uint":
+            return
+        print("Leaving expr")
         self.ast.jump_super()
 
     def visit_block(self, t):
@@ -191,15 +200,40 @@ class ASTBuilder(Visitor):
         name = t.children[0]
         self.ast.create_sub_scope(payload=RIdentPayload(name))
 
+    def visit_uint(self, t):
+        val = t.children[0]
+        self.ast.create_sub_scope(payload=UIntPayload(val))
+
     def visit_call_list(self, t):
-        if self.ast.context.data == "call_list":
+        print("Visiting:", t)
+        if self.ast.context.super_scope.data == "call_list" or self.ast.context.data == "call_list":
             return
         scope = self.ast.create_sub_scope(payload=CallListPayload())
         if not self.ast.jump_to(scope.ID):
             raise Exception("could not jump to scope")
 
     def after_visit_call_list(self, _):
-        if self.ast.context.data != "call_list":
+        if self.ast.context.data == "call_list":
+            self.ast.jump_super()
+
+    def visit_arg(self, t):
+        scope = self.ast.create_sub_scope(payload=ArgPayload())
+        if not self.ast.jump_to(scope.ID):
+            raise Exception("could not jump to scope")
+
+    def after_visit_arg(self, _):
+        self.ast.jump_super()
+
+    def visit_arg_list(self, t):
+        print("Visiting:", t)
+        if self.ast.context.super_scope.data == "arg_list" or self.ast.context.data == "arg_list":
+            return
+        scope = self.ast.create_sub_scope(payload=ArgListPayload())
+        if not self.ast.jump_to(scope.ID):
+            raise Exception("could not jump to scope")
+
+    def after_visit_arg_list(self, _):
+        if self.ast.context.data == "arg_list":
             self.ast.jump_super()
 
 

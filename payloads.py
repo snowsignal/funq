@@ -73,6 +73,22 @@ class TypePayload(Payload):
         self.measured = measured
 
 
+class UIntPayload(Payload):
+    def __init__(self, val):
+        super().__init__("uint")
+        self.value = val
+
+
 class CallListPayload(Payload):
     def __init__(self):
         super().__init__("call_list")
+
+
+class ArgListPayload(Payload):
+    def __init__(self):
+        super().__init__("arg_list")
+
+
+class ArgPayload(Payload):
+    def __init__(self):
+        super().__init__("arg")

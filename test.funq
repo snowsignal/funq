@@ -1,4 +1,4 @@
-func Foo() -> Int {
+func Foo(something: Qu, something2: Int) -> Int {
   qif ^000^ == something {
     qif ^10^ == ^01^ {
       hadamard(4+5,3+5);

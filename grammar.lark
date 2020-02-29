@@ -22,7 +22,7 @@ string: ESCAPED_STRING
 
 uint: /[0-9]+/
 
-arg_list: arg ("," arg)*
+arg_list: arg ("," arg_list)*
 
 arg: v_ident ":" type
 
