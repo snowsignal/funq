@@ -1,10 +1,12 @@
-start: top_level_stmt*
+// This is the top node of the
+?start: top_level_stmt*
 
 top_level_stmt: region | function_def
 
 region: "region" r_ident "<" uint ">" block
 
-type: /[^0-9]\w+/ ("?")?
+SINGLE_COMMENT: "//" /[^\n]/*
+%ignore SINGLE_COMMENT
 
 function_def: "func" f_ident "(" arg_list? ")" ("->" type)? block
 
@@ -12,11 +14,13 @@ function_call: f_ident "(" call_list ")"
 
 call_list: expr ("," call_list)*
 
-r_ident: /[^0-9\^]\w+/
+r_ident: /[a-zA-Z_][a-zA-Z0-9_]*/
 
-f_ident: /[^0-9\^]\w+/
+f_ident: /[a-zA-Z_][a-zA-Z0-9_]*/
 
-v_ident: /[^0-9\^]\w+/
+v_ident: /[a-zA-Z_][a-zA-Z0-9_]*/
+
+type: /[a-zA-Z_][a-zA-Z0-9_]*/ ("?")?
 
 string: ESCAPED_STRING
 

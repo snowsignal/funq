@@ -92,3 +92,8 @@ class ArgListPayload(Payload):
 class ArgPayload(Payload):
     def __init__(self):
         super().__init__("arg")
+
+
+class RegionPayload(Payload):
+    def __init__(self):
+        super().__init__("region")
