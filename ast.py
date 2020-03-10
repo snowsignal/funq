@@ -1,5 +1,8 @@
-from visitor import Visitor
+from .visitor import Visitor
+from lark import Token
 from payloads import *
+from copy import deepcopy
+
 
 class AST:
     def __init__(self):
@@ -77,6 +80,20 @@ class Scope:
         # Increment the global ID nonce
         Scope.uid += 1
 
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        return result
+
+    def __getattr__(self, item):
+        if item[0:4] == "get_" or item in self.payload.__dict__:
+            return super().__getattribute__("payload").__getattribute__(item)
+        else:
+            raise AttributeError("Attribute '" + item + "' not found in Scope object")
+
     def print(self, indents=0):
         p = self.payload.__dict__ if self.payload is not None else {}
         print(" " * indents + "(" + self.data + ":" + str(p) + ")")
@@ -99,6 +116,10 @@ class Scope:
 
     def verify_type(self, typename):
         return True
+
+
+def token_to_str(t: Token) -> str:
+    return t.value
 
 
 class ASTBuilder(Visitor):
@@ -183,25 +204,26 @@ class ASTBuilder(Visitor):
         self.ast.jump_super()
 
     def visit_type(self, t):
-        name = t.children[0]
+        name = token_to_str(t.children[0])
         quantum = name == "Q"
         measured = len(t.children) > 1  # Because the second token will always be the '?'
         self.ast.create_sub_scope(payload=TypePayload(name, quantum, measured))
 
     def visit_f_ident(self, t):
-        name = t.children[0]
+        name = token_to_str(t.children[0])
         self.ast.create_sub_scope(payload=FIdentPayload(name))
 
     def visit_v_ident(self, t):
-        name = t.children[0]
+        name = token_to_str(t.children[0])
         self.ast.create_sub_scope(payload=VIdentPayload(name))
 
     def visit_r_ident(self, t):
-        name = t.children[0]
+        name = token_to_str(t.children[0])
         self.ast.create_sub_scope(payload=RIdentPayload(name))
 
     def visit_uint(self, t):
-        val = t.children[0]
+        # This will always succeed since only ints are parsed in the first place.
+        val = int(token_to_str(t.children[0]))
         self.ast.create_sub_scope(payload=UIntPayload(val))
 
     def visit_call_list(self, t):
@@ -237,8 +259,16 @@ class ASTBuilder(Visitor):
             self.ast.jump_super()
 
 
+import sys
+from os import path
+sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
+
 from parser import parse_file
 f = parse_file("test.funq")
 
 a = ASTBuilder(f)
 a.traverse()
+
+from transpiler import Transpiler
+
+t = Transpiler(a.ast)

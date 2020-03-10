@@ -1,18 +1,24 @@
-// This is the top node of the
+// This is the top syntax node
 ?start: top_level_stmt*
 
-top_level_stmt: region | function_def
+// A top level statement exists only outside of a scope
+top_level_stmt: region | function_def | gate_def
 
+// A region is a specific program or circuit that can use functions from the file
 region: "region" r_ident "<" uint ">" block
 
+// Comments begin with // and are terminated at the newline character
 SINGLE_COMMENT: "//" /[^\n]/*
 %ignore SINGLE_COMMENT
 
+// A function is a segment of code that is inserted inline to the program
 function_def: "func" f_ident "(" arg_list? ")" ("->" type)? block
 
 function_call: f_ident "(" call_list ")"
 
 call_list: expr ("," call_list)*
+
+// The following three terminals are identifiers for regions, functions, and variables, respectively.
 
 r_ident: /[a-zA-Z_][a-zA-Z0-9_]*/
 
@@ -20,25 +26,33 @@ f_ident: /[a-zA-Z_][a-zA-Z0-9_]*/
 
 v_ident: /[a-zA-Z_][a-zA-Z0-9_]*/
 
+// A type identifier
 type: /[a-zA-Z_][a-zA-Z0-9_]*/ ("?")?
 
-string: ESCAPED_STRING
-
+// An unsigned integer (aka whole number)
 uint: /[0-9]+/
 
+// A list of arguments for a function
 arg_list: arg ("," arg_list)*
 
+// An argument for a function
 arg: v_ident ":" type
 
+// A block is a set of statements contained within brackets
 block: "{" stmt* "}"
 
-stmt: (function_call | return | assignment ) ";" | if | qif
+// A statement can either be a function call, declaration, return statement,
+stmt: (function_call | return | declaration | measurement ) ";" | if | qif
 
-assignment: type v_ident "=" ()
+declaration: type v_ident "=" expr
+
+q_declaration: type v_ident "=" q_lit
+
+measurement: type v_ident "<-" q_expr
 
 return: "return" expr
 
-expr: paren | mul | div | add | sub | v_ident | string | uint
+expr: paren | mul | div | add | sub | v_ident | uint
 
 if: "if" b_expr block
 
@@ -62,7 +76,13 @@ add: expr "+" expr
 
 sub: expr "-" expr
 
-q_expr: q_eq | q_neq
+q_expr: q_var | q_slice | q_index
+
+q_slice: v_ident "[" expr ":" expr "]"
+
+q_index: v_ident "[" expr "]"
+
+q_b_expr: q_eq | q_neq
 
 q_eq: q_var "==" q_var
 
@@ -72,11 +92,7 @@ q_lit: "^" qubit+ "^"
 
 q_var: q_lit | v_ident
 
-qif: "qif" q_expr block
-
 qubit: "0" | "1"
 
 %import common.WS
-%import common.ESCAPED_STRING
-
 %ignore WS

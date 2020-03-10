@@ -1,11 +1,17 @@
-func optionalHadamard(q: Q, shouldHadamard: Bool) {
-    if shouldHadamard {
-        hadamard q;
+func optionalHadamard(q: Q, b: Int) {
+    if b == 10 {
+        hadamard(q);
     }
 }
 
 region Main<10> {
     Int b = 10;
     Q register = ^0000000000^;
-    optionalHadamard(register, b == 10);
+    optionalHadamard(register, b);
 }
+
+// This will become:
+// OPENQASM 2.0;
+// include "qelib1.inc"
+// qreg register[10];
+// h register;

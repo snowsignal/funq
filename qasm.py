@@ -1,3 +1,69 @@
+class InstructionArgument:
+    def __init__(self, arg_type):
+        self.arg_type = arg_type
+
+    def emit(self) -> str:
+        raise Exception("A subclass of InstructionArgument did not override emit")
+
+
+class UIntArgument(InstructionArgument):
+    def __init__(self, value):
+        super().__init__("uint")
+        self.value = value
+
+    def emit(self) -> str:
+        return str(self.value)
+
+
+class CRegArgument(InstructionArgument):
+    def __init__(self, name):
+        super().__init__("c_reg")
+        self.name = name
+
+    def emit(self) -> str:
+        return self.name
+
+
+class QuantumIndexArgument(InstructionArgument):
+    def __init__(self, name, index):
+        super().__init__("q_index")
+        self.name = name
+        self.index = index
+
+    def emit(self) -> str:
+        return self.name + "[" + str(self.index) + "]"
+
+
+class QuantumRegArgument(InstructionArgument):
+    def __init__(self, name):
+        super().__init__("q_reg")
+        self.name = name
+
+    def emit(self) -> str:
+        return self.name
+
+
+class QuantumSliceArgument(InstructionArgument):
+    def __init__(self, name, start, end):
+        super().__init__("q_slice")
+        self.name = name
+        self.start = start
+        self.end = end
+        self.iter = self.start
+
+    def emit(self) -> str:
+        return self.name + "[" + str(self.iter) + "]"
+
+    def reset(self):
+        self.iter = self.start
+
+    def increment(self) -> bool:
+        if self.iter < self.end:
+            self.iter += 1
+            return True
+        else:
+            return False
+
 
 class Instruction:
     def __init__(self, instruction_type):
@@ -7,50 +73,80 @@ class Instruction:
         return "// Empty instruction. You should not be seeing this."
 
 
-class Hadamard(Instruction):
-    def __init__(self, arguments):
-        super().__init__("gate_call")
-        self.arguments = arguments
+class FunctionCall(Instruction):
+    def __init__(self, name, cargs, qargs):
+        super().__init__("func_call")
+        self.name = name
+        self.cargs = cargs
+        self.qargs = qargs
 
     def emit(self) -> str:
-        return "h " + self.arguments
+        output = ""
+        func = self.name
+        if len(self.cargs) == 0:
+            header = func + " "
+        else:
+            header = func + "(" + ','.join([c.emit() for c in self.cargs]) + ") "
+        should_repeat = False
+        var_to_repeat = None
+        for q in self.qargs:
+            if q.arg_type == "q_slice":
+                should_repeat = True
+                var_to_repeat = q
+        if should_repeat:
+            var_to_repeat.reset()
+            while True:
+                output += header + ", ".join([q.emit() for q in self.qargs]) + ";\n"
+                if not var_to_repeat.increment():
+                    break
+        else:
+            output += header + ", ".join([q.emit() for q in self.qargs]) + ";\n"
+
+        return output
 
 
-class Universal(Instruction):
-    pass
+class Comparison:
+    def __init__(self, arg1, arg2, op):
+        self.arg1 = arg1
+        self.arg2 = arg2
+        self.op = op
+
+    def perform_operation(self) -> bool:
+        if self.op == "==":
+            return self.arg1.value == self.arg2.value
+        elif self.op == "!=":
+            return self.arg1.value != self.arg2.value
+        elif self.op == ">":
+            return self.arg1.value > self.arg2.value
+        elif self.op == "<":
+            return self.arg1.value < self.arg2.value
+        raise Exception("Invalid operation for Comparison!")
+
+    def compile_time_result(self) -> (bool, bool):
+        if self.arg1.arg_type == "uint" and self.arg2.arg_type == "uint":
+            return True, self.perform_operation()
+        else:
+            return False, None
+
+    def emit(self) -> str:
+        return self.arg1.emit() + self.op + self.arg2.emit()
 
 
-class CNot(Instruction):
-    pass
+class IfInstruction(Instruction):
+    def __init__(self, comparison, sub_instruction):
+        super().__init__("if")
+        self.comparison = comparison
+        self.sub_instruction = sub_instruction
 
-
-class If(Instruction):
-    pass
-
-
-class CReg(Instruction):
-    pass
-
-
-class QReg(Instruction):
-    pass
-
-
-class X(Instruction):
-    pass
-
-
-class Y(Instruction):
-    pass
-
-
-class Z(Instruction):
-    pass
-
-
-class S(Instruction):
-    pass
-
-
-class T(Instruction):
-    pass
+    def emit(self) -> str:
+        can_resolve, result = self.comparison.compile_time_result()
+        if can_resolve:
+            if result:
+                return self.sub_instruction.emit()
+            else:
+                return ""
+        else:
+            instructions = self.sub_instruction.emit().split("\n")
+            for i in range(0, len(instructions)):
+                instructions[i] = "if (" + self.comparison.emit() + ") " + instructions[i]
+            return "\n".join(instructions)
