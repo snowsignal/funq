@@ -1,6 +1,7 @@
-from .builtin_types import Types
+from builtin_types import Types
 
-TYPE_NO_RETURN = "_PLACEHOLDER"
+TYPE_NO_RETURN = "_NO_RETURN"
+
 
 # A Payload is a packet of information stored in an AST node
 class Payload:
@@ -56,7 +57,7 @@ class FunctionCallPayload(Payload):
 
     def get_call_list(self):
         for c in self.owning_scope.children:
-            if c == "call_list":
+            if c.data == "call_list":
                 return c
         raise Exception("No call list for function call!")
 
@@ -76,15 +77,28 @@ class OpPayload(Payload):
         super().__init__("operation")
         self.operation = op
 
+    def get_operation(self):
+        return self.operation
+
 
 class IfPayload(Payload):
     def __init__(self):
         super().__init__("if")
 
+    def get_args(self):
+        comp = self.owning_scope.children
+        return comp[0], comp[2]
 
-class QIfPayload(Payload):
-    def __init__(self):
-        super().__init__("qif")
+    def get_op(self):
+        comp = self.owning_scope.children[0].children[0]
+        if comp.data == "eq":
+            return "=="
+        elif comp.data == "neq":
+            return "!="
+        elif comp.data == "greater":
+            return ">"
+        elif comp.data == "lesser":
+            return "<"
 
 
 class FIdentPayload(Payload):
@@ -166,8 +180,69 @@ class RegionPayload(Payload):
     def __init__(self):
         super().__init__("region")
 
+    def get_name(self):
+        for n in self.owning_scope.children:
+            if n.type == "r_ident":
+                return n
+        raise Exception("No name for region!")
+
     def get_qubit_cap(self):
         for c in self.owning_scope.children:
             if c.type == "uint":
                 return c
         raise Exception("No qubit count for region!")
+
+    def get_block(self):
+        for b in self.owning_scope.children:
+            if b.type == "block":
+                return b
+        raise Exception("No block for region!")
+
+
+class QuantumSlicePayload(Payload):
+    def __init__(self):
+        super().__init__("q_slice")
+
+    def get_start_end(self):
+        return self.owning_scope.children[0].value, self.owning_scope.children[1].value
+
+    def get_type(self):
+        return "Q"
+
+
+class QuantumLiteralPayload(Payload):
+    def __init__(self):
+        super().__init__("q_lit")
+
+    def get_qubit_length(self):
+        return len(self.owning_scope.children)
+
+
+class ClassicalDeclarationPayload(Payload):
+    def __init__(self):
+        super().__init__("c_decl")
+
+
+class QuantumDeclarationPayload(Payload):
+    def __init__(self):
+        super().__init__("q_decl")
+
+    def get_type(self):
+        return self.owning_scope.children[0]
+
+    def get_name(self):
+        return self.owning_scope.children[1]
+
+    def get_length(self):
+        return self.owning_scope.children[2].get_qubit_length()
+
+
+class QubitPayload(Payload):
+    def __init__(self, value: bool):
+        super().__init__("qubit")
+        self.value = value
+
+
+class QuantumIndexPayload(Payload):
+    def __init__(self):
+        super().__init__("q_index")

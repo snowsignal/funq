@@ -2,7 +2,7 @@
 ?start: top_level_stmt*
 
 // A top level statement exists only outside of a scope
-top_level_stmt: region | function_def | gate_def
+top_level_stmt: region | function_def
 
 // A region is a specific program or circuit that can use functions from the file
 region: "region" r_ident "<" uint ">" block
@@ -16,7 +16,7 @@ function_def: "func" f_ident "(" arg_list? ")" ("->" type)? block
 
 function_call: f_ident "(" call_list ")"
 
-call_list: expr ("," call_list)*
+call_list: expr ("," call_list)* | q_expr ("," call_list)*
 
 // The following three terminals are identifiers for regions, functions, and variables, respectively.
 
@@ -42,7 +42,7 @@ arg: v_ident ":" type
 block: "{" stmt* "}"
 
 // A statement can either be a function call, declaration, return statement,
-stmt: (function_call | return | declaration | measurement ) ";" | if | qif
+stmt: (function_call | return | declaration | q_declaration | measurement ) ";" | if
 
 declaration: type v_ident "=" expr
 
@@ -76,23 +76,19 @@ add: expr "+" expr
 
 sub: expr "-" expr
 
-q_expr: q_var | q_slice | q_index
+q_expr: q_slice | q_index
 
 q_slice: v_ident "[" expr ":" expr "]"
 
 q_index: v_ident "[" expr "]"
 
-q_b_expr: q_eq | q_neq
-
-q_eq: q_var "==" q_var
-
-q_neq: q_var "!=" q_var
-
 q_lit: "^" qubit+ "^"
 
-q_var: q_lit | v_ident
+qubit: ONE | ZERO
 
-qubit: "0" | "1"
+ONE: "1"
+
+ZERO: "0"
 
 %import common.WS
 %ignore WS

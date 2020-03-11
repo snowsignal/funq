@@ -1,20 +1,10 @@
-func Foo(s: Q, s2: Q) -> Int {
-  qif ^000^ == something {
-    qif ^10^ == ^01^ {
-      hadamard(4+5,3+5);
+
+
+
+region Main<10> {
+    Q some_qubit = ^010^;
+    hadamard (some_qubit[0:2], 12345, another_qubit[2]);
+    if classical_register == 1 {
+      hadamard(some_qubit[0]);
     }
-  }
 }
-
-func Bob() -> Bool {
-
-}
-
-func ASDF() -> asdf {}
-
-region Main<5> {
-    hadamard(q);
-}
-
-
-// Testing, testing, 1 2 3

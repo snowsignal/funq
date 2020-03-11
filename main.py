@@ -111,5 +111,18 @@ def run_application(arg_list: list) -> None:
 
 
 if __name__ == "__main__":
-    a = argv[1:]
-    run_application(a)
+    #a = argv[1:]
+    #run_application(a)
+    from parser import parse_file
+    from scope import ASTBuilder
+
+    f = parse_file("test.funq")
+
+    a = ASTBuilder(f)
+    a.traverse()
+
+    from transpiler import Transpiler
+
+    t = Transpiler(a.ast)
+
+    a.ast.context.print()

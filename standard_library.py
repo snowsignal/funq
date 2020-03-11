@@ -11,7 +11,5 @@ class StandardLibrary:
         return function_name in StandardLibrary.functions
 
     @staticmethod
-    def generate_instruction_for(function_name, arguments):
-        _func = StandardLibrary.functions[function_name]
-        # TODO
-        pass
+    def get_standard_name(function_name):
+        return StandardLibrary.functions[function_name]

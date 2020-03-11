@@ -30,7 +30,8 @@ class Visitor(TreeTraversal):
         try:
             func = getattr(self, "visit_" + t.data)
             func(t)
-        except (AttributeError, TypeError):
+        except (AttributeError, TypeError) as e:
+            print(e)
             return
 
     def _post_process_tree(self, t):

@@ -1,4 +1,4 @@
-from .visitor import Visitor
+from visitor import Visitor
 from lark import Token
 from payloads import *
 from copy import deepcopy
@@ -90,6 +90,7 @@ class Scope:
 
     def __getattr__(self, item):
         if item[0:4] == "get_" or item in self.payload.__dict__:
+            print("GETTING " + item)
             return super().__getattribute__("payload").__getattribute__(item)
         else:
             raise AttributeError("Attribute '" + item + "' not found in Scope object")
@@ -135,6 +136,14 @@ class ASTBuilder(Visitor):
     def after_visit_function_def(self, _):
         self.ast.jump_super()
 
+    def visit_region(self, t):
+        scope = self.ast.create_sub_scope(payload=RegionPayload())
+        if not self.ast.jump_to(scope.ID):
+            raise Exception("could not jump to scope")
+
+    def after_visit_region(self, _):
+        self.ast.jump_super()
+
     def visit_function_call(self, t):
         scope = self.ast.create_sub_scope(payload=FunctionCallPayload())
         if not self.ast.jump_to(scope.ID):
@@ -161,7 +170,6 @@ class ASTBuilder(Visitor):
 
     def visit_expr(self, t):
         expr = t.children[0]
-        print("Visiting:", t)
         # There are many kinds of expressions. Check which one it is:
         if expr.data == "paren" \
             or expr.data == "v_ident" \
@@ -227,16 +235,20 @@ class ASTBuilder(Visitor):
         self.ast.create_sub_scope(payload=UIntPayload(val))
 
     def visit_call_list(self, t):
-        print("Visiting:", t)
-        if self.ast.context.super_scope.data == "call_list" or self.ast.context.data == "call_list":
+        print("With: " + self.ast.context.super_scope.data + " " + self.ast.context.data)
+        if self.ast.context.super_scope.data == "call_list":
+            self.ast.jump_super()
+            return
+        if self.ast.context.data == "call_list":
             return
         scope = self.ast.create_sub_scope(payload=CallListPayload())
         if not self.ast.jump_to(scope.ID):
             raise Exception("could not jump to scope")
 
     def after_visit_call_list(self, _):
-        if self.ast.context.data == "call_list":
-            self.ast.jump_super()
+        #if self.ast.context.data == "call_list" or self.ast.context.super_scope.data == "call_list":
+        print("JUMPING")
+        self.ast.jump_super()
 
     def visit_arg(self, t):
         scope = self.ast.create_sub_scope(payload=ArgPayload())
@@ -247,7 +259,6 @@ class ASTBuilder(Visitor):
         self.ast.jump_super()
 
     def visit_arg_list(self, t):
-        print("Visiting:", t)
         if self.ast.context.super_scope.data == "arg_list" or self.ast.context.data == "arg_list":
             return
         scope = self.ast.create_sub_scope(payload=ArgListPayload())
@@ -258,17 +269,44 @@ class ASTBuilder(Visitor):
         if self.ast.context.data == "arg_list":
             self.ast.jump_super()
 
+    def visit_q_slice(self, t):
+        scope = self.ast.create_sub_scope(payload=QuantumSlicePayload())
+        if not self.ast.jump_to(scope.ID):
+            raise Exception("could not jump to scope")
 
-import sys
-from os import path
-sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
+    def after_visit_q_slice(self):
+        self.ast.jump_super()
 
-from parser import parse_file
-f = parse_file("test.funq")
+    def visit_q_lit(self, t):
+        scope = self.ast.create_sub_scope(payload=QuantumLiteralPayload())
+        if not self.ast.jump_to(scope.ID):
+            raise Exception("could not jump to scope")
 
-a = ASTBuilder(f)
-a.traverse()
+    def visit_qubit(self, t):
+        v = t.children[0].value
+        value = v == "1"
+        scope = self.ast.create_sub_scope(payload=QubitPayload(value))
+        if not self.ast.jump_to(scope.ID):
+            raise Exception("could not jump to scope")
 
-from transpiler import Transpiler
+    def after_visit_q_lit(self, _):
+        self.ast.jump_super()
 
-t = Transpiler(a.ast)
+    def after_visit_qubit(self, _):
+        self.ast.jump_super()
+
+    def visit_q_declaration(self, _):
+        scope = self.ast.create_sub_scope(payload=QuantumDeclarationPayload())
+        if not self.ast.jump_to(scope.ID):
+            raise Exception("could not jump to scope")
+
+    def after_visit_q_declaration(self, _):
+        self.ast.jump_super()
+
+    def visit_q_index(self, _):
+        scope = self.ast.create_sub_scope(payload=QuantumIndexPayload())
+        if not self.ast.jump_to(scope.ID):
+            raise Exception("could not jump to scope")
+
+    def after_visit_q_index(self, _):
+        self.ast.jump_super()

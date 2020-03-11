@@ -133,20 +133,46 @@ class Comparison:
 
 
 class IfInstruction(Instruction):
-    def __init__(self, comparison, sub_instruction):
+    def __init__(self, comparison, sub_instructions):
         super().__init__("if")
         self.comparison = comparison
-        self.sub_instruction = sub_instruction
+        self.sub_instructions = sub_instructions
+
+    def emit_sub_instructions(self):
+        emission = ""
+        for i in self.sub_instructions:
+            emission += i.emit()
+        return emission
 
     def emit(self) -> str:
         can_resolve, result = self.comparison.compile_time_result()
         if can_resolve:
             if result:
-                return self.sub_instruction.emit()
+                return self.emit_sub_instructions()
             else:
                 return ""
         else:
-            instructions = self.sub_instruction.emit().split("\n")
-            for i in range(0, len(instructions)):
+            instructions = self.emit_sub_instructions().split("\n")
+            for i in range(0, len(instructions)-1):
                 instructions[i] = "if (" + self.comparison.emit() + ") " + instructions[i]
             return "\n".join(instructions)
+
+
+class QuantumInitialization(Instruction):
+    def __init__(self, name, size):
+        super().__init__("q_init")
+        self.name = name
+        self.size = size
+
+    def emit(self) -> str:
+        return "qreg " + self.name + "(" + str(self.size) + ")"
+
+
+class ClassicalInitialization(Instruction):
+    def __init__(self, name, size):
+        super().__init__("c_init")
+        self.name = name
+        self.size = size
+
+    def emit(self) -> str:
+        return "creg " + self.name + "(" + str(self.size) + ")"
