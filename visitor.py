@@ -1,10 +1,10 @@
 from lark import Token, Tree
-from copy import deepcopy
+#from copy import deepcopy
 
 
 class TreeTraversal:
     def __init__(self, tree):
-        self.tree = deepcopy(tree)
+        self.tree = tree
 
     def _traverse(self, t):
         return t
@@ -28,6 +28,7 @@ class Visitor(TreeTraversal):
 
     def _process_tree(self, t):
         try:
+            self.visit_any(t)
             func = getattr(self, "visit_" + t.data)
             func(t)
         except (AttributeError, TypeError) as e:
@@ -38,8 +39,15 @@ class Visitor(TreeTraversal):
         try:
             func = getattr(self, "after_visit_" + t.data)
             func(t)
-        except (AttributeError, TypeError):
+        except (AttributeError, TypeError) as e:
+            print(e)
             return
+
+    def visit_any(self, t):
+        pass
+
+    def set_source(self, tree):
+        self.tree = tree
 
 
 class Transformer(TreeTraversal):

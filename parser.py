@@ -12,5 +12,5 @@ def grammar() -> str:
 def parse_file(f_name: str) -> Tree:
     with open(f_name) as f:
         contents = "\n".join(f.readlines())
-        l = Lark(grammar(), parser='lalr')
+        l = Lark(grammar(), parser='lalr', propagate_positions=True)
         return l.parse(contents)

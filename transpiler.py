@@ -6,12 +6,20 @@ from qasm import *
 
 # A Transpiler converts an AST into OpenQASM programs by visiting the nodes
 # and converting.
-class Transpiler(Visitor):
-    def __init__(self, ast):
-        ast.go_to_top()
-        super().__init__(ast.context)
-        self.regions = {}
-        self.functions = {}
+class Transpiler:
+    def __init__(self, state):
+        self.regions = state.regions
+        self.functions = state.functions
+        self.programs = {}
+        self.gates = {}
+
+    def transpile(self):
+        for name in self.functions.keys():
+            f = self.functions[name]
+            self.generate_gate(name, f[0], f[1], f[2])
+        for name in self.regions.items():
+            r = self.regions[name]
+            self.generate_program(name, r[0], r[1])
 
     def visit_region(self, region):
         print("Visiting region")
@@ -20,12 +28,13 @@ class Transpiler(Visitor):
         print(instructions)
         self.regions[name] = instructions
 
-    def visit_function(self, func):
-        # Add a new function to the definitions table
-        name = func.get_name().name
-        measured = func.get_type().measured
-        instructions = self.convert_to_instructions(func.get_block())
-        self.functions[name] = (measured, instructions)
+    def generate_gate(self, func_name, cargs, qargs, block):
+        instructions = self.convert_to_instructions(block)
+        self.gates[func_name] = OpenQASMGate(func_name, cargs, qargs, instructions)
+
+    def generate_program(self, name, qubits, block):
+        instructions = self.convert_to_instructions(block)
+        self.programs[name] = OpenQASMProgram(qubits, instructions)
 
     def convert_to_instructions(self, stmt: Scope) -> list:
         if stmt.data == "block":
@@ -50,6 +59,12 @@ class Transpiler(Visitor):
             name = stmt.get_name().name
             size = stmt.get_length()
             return [QuantumInitialization(name, size)]
+        elif stmt.data == "c_decl":
+            name = stmt.get_name().name
+            size = stmt.get_length()
+            return [ClassicalInitialization(name, size)]
+        elif stmt.data == "measurement":
+            raise Exception("Unimplemented")
         else:
             raise Exception("Unexpected statement type: " + str(stmt.__dict__))
 
@@ -63,13 +78,32 @@ class Transpiler(Visitor):
 
 
 class OpenQASMProgram:
-    def __init__(self, instructions, gates):
+    def __init__(self, qubits, instructions):
+        self.qubits = qubits
         self.instructions = instructions
-        self.gates = gates
+
+    def add_instruction(self, instructions):
+        self.instructions += instructions
+
+    def emit(self):
+        emission = ""
+        for instruction in self.instructions:
+            emission += instruction.emit()
+        return emission
 
 
 class OpenQASMGate:
-    def __init__(self, cargs, qargs, instructions):
+    def __init__(self, name, cargs, qargs, instructions):
+        self.instructions = instructions
+        self.name = name
         self.cargs = cargs
         self.qargs = qargs
-        self.instructions = instructions
+
+    def add_instruction(self, instructions):
+        self.instructions += instructions
+
+    def emit(self):
+        header = "gate " + self.name + " (" + ",".join(self.cargs) + ") " + ",".join(self.qargs) + "{\n"
+        body = "".join([instruction.emit() for instruction in self.instructions])
+        tail = "\n}"
+        return header + body + tail

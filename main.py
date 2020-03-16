@@ -38,11 +38,6 @@ Options:
         print(msg)
         print("-------------")
 
-    def compiler_error(self, msg):
-        print("--- COMPILATION ERROR ---")
-        print(msg)
-        print("-------------------------")
-
     def _load(self):
         if len(self.args) == 0:
             self.interface_error("No input file specified\nUse 'funq -h' for help.")
@@ -103,7 +98,8 @@ Options:
         # Main function for the compiler
 
         # Step One: Open the input file
-        file = open(self)
+        with open(self.file_to_open) as f:
+            pass
 
 def run_application(arg_list: list) -> None:
     command_line_interface = CommandLineInterface(args=arg_list)
@@ -118,11 +114,23 @@ if __name__ == "__main__":
 
     f = parse_file("test.funq")
 
+    print(f.pretty("-"))
+
     a = ASTBuilder(f)
     a.traverse()
 
     from transpiler import Transpiler
+    from state import State
 
-    t = Transpiler(a.ast)
+    s = State(a.ast)
+
+    s.build_from_ast()
+
+    t = Transpiler(s)
 
     a.ast.context.print()
+
+    #t.transpile()
+    from resolver import Resolver
+    r = Resolver(a.ast)
+    r.traverse()

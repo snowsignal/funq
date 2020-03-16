@@ -1,12 +1,8 @@
 
 
 class Types:
-    classical_types = {
-        "Int": 32,
-        "Byte": 8,
-        "Bit": 1
-    }
-    quantum_types = ["Q"]
+    classical_types = ["Const", "C[]"]
+    quantum_types = ["Q", "Q[]"]
 
     @staticmethod
     def is_classical(typename):

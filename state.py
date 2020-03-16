@@ -7,19 +7,19 @@ class State:
         self.regions = {}
 
     def register_function(self, scope):
-        name: str = scope.children[0].payload.name
-        return_name: int = scope.children[1].payload.name
-        is_measured: bool = scope.children[1].payload.measured
-        block = scope.children[2]
+        name: str = scope.get_name().name
+        block = scope.get_block()
+        classical_args = scope.get_classical_arguments()
+        quantum_args = scope.get_quantum_arguments()
         if name in self.functions:
             raise Exception("Function was already declared.")
         else:
-            self.functions[name] = ((return_name, is_measured), block)
+            self.functions[name] = (classical_args, quantum_args, block)
 
     def register_region(self, scope):
-        name: str = scope.children[0].payload.name
-        qubits: int = scope.children[1].payload.value
-        block = scope.children[2]
+        name: str = scope.get_name().name
+        qubits: int = scope.get_qubit_cap()
+        block = scope.get_block()
         if name in self.regions:
             raise Exception("Region was already declared.")
         else:

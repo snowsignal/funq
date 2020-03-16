@@ -1,4 +1,5 @@
 from builtin_types import Types
+from errors import CompilerError
 
 TYPE_NO_RETURN = "_NO_RETURN"
 
@@ -12,8 +13,8 @@ class Payload:
     def set_scope(self, scope):
         self.owning_scope = scope
 
-    def validate(self) -> bool:
-        return True
+    def validate(self):
+        return
 
 
 class FunctionPayload(Payload):
@@ -32,17 +33,32 @@ class FunctionPayload(Payload):
                 return b
         raise Exception("No block in function!")
 
-    def get_type(self):
-        for t in self.owning_scope.children:
-            if t.data == "type":
-                return t
-        return TypePayload(TYPE_NO_RETURN)
+    def get_classical_arguments(self) -> list:
+        arguments = self.owning_scope.get_arg_list().get_arguments()
+        classical_args = []
+        for arg in arguments:
+            if Types.is_classical(arg.get_type().name):
+                classical_args.append(arg)
+        return classical_args
+
+    def get_quantum_arguments(self) -> list:
+        arguments = self.owning_scope.get_arg_list().get_arguments()
+        quantum_args = []
+        for arg in arguments:
+            if Types.is_quantum(arg.get_type().name):
+                quantum_args.append(arg)
+        return quantum_args
 
     def get_arg_list(self):
         for a in self.owning_scope.children:
             if a.data == "arg_list":
                 return a
         return ArgListPayload()
+
+    def validate(self):
+        # Verify this function does not name collide
+        if not self.owning_scope.register_identifier(self.get_name().name):
+            raise CompilerError("F4", self.get_name().name)
 
 
 class FunctionCallPayload(Payload):
@@ -78,7 +94,32 @@ class OpPayload(Payload):
         self.operation = op
 
     def get_operation(self):
-        return self.operation
+        op = self.operation
+        if op == "add":
+            return "+"
+        elif op == "sub":
+            return "-"
+        elif op == "mul":
+            return "*"
+        elif op == "div":
+            return "/"
+
+
+class BoolOpPayload(Payload):
+    def __init__(self, op):
+        super().__init__("b_expr")
+        self.operation = op
+
+    def get_operation(self):
+        op = self.operation
+        if op == "eq":
+            return "=="
+        elif op == "neq":
+            return "!="
+        elif op == "greater":
+            return ">"
+        elif op == "lesser":
+            return "<"
 
 
 class IfPayload(Payload):
@@ -86,11 +127,11 @@ class IfPayload(Payload):
         super().__init__("if")
 
     def get_args(self):
-        comp = self.owning_scope.children
+        comp = self.owning_scope.children[0].children
         return comp[0], comp[2]
 
     def get_op(self):
-        comp = self.owning_scope.children[0].children[0]
+        comp = self.owning_scope.children[0]
         if comp.data == "eq":
             return "=="
         elif comp.data == "neq":
@@ -108,9 +149,16 @@ class FIdentPayload(Payload):
 
 
 class VIdentPayload(Payload):
-    def __init__(self, name):
+    def __init__(self, name, type=""):
         super().__init__("v_ident")
         self.name = name
+        self.v_type = type
+
+    def resolve_type(self, type):
+        self.v_type = type
+
+    def get_type_name(self):
+        return self.v_type
 
 
 class RIdentPayload(Payload):
@@ -120,17 +168,18 @@ class RIdentPayload(Payload):
 
 
 class TypePayload(Payload):
-    def __init__(self, name, quantum=False, measured=False):
+    def __init__(self, name):
         super().__init__("type")
         self.name = name
-        self.quantum = quantum
-        self.measured = measured
 
 
 class UIntPayload(Payload):
     def __init__(self, val):
         super().__init__("uint")
         self.value = val
+
+    def get_type(self):
+        return "Const"
 
 
 class CallListPayload(Payload):
@@ -172,9 +221,6 @@ class ArgPayload(Payload):
     def get_type(self):
         return self.owning_scope.children[1]
 
-    def is_quantum(self):
-        return self.get_type().quantum
-
 
 class RegionPayload(Payload):
     def __init__(self):
@@ -206,7 +252,7 @@ class QuantumSlicePayload(Payload):
     def get_start_end(self):
         return self.owning_scope.children[0].value, self.owning_scope.children[1].value
 
-    def get_type(self):
+    def get_type_name(self):
         return "Q"
 
 
@@ -221,6 +267,15 @@ class QuantumLiteralPayload(Payload):
 class ClassicalDeclarationPayload(Payload):
     def __init__(self):
         super().__init__("c_decl")
+
+    def get_type(self):
+        return self.owning_scope.children[0]
+
+    def get_name(self):
+        return self.owning_scope.children[1]
+
+    def get_expression(self):
+        return self.owning_scope.children[2]
 
 
 class QuantumDeclarationPayload(Payload):
@@ -246,3 +301,8 @@ class QubitPayload(Payload):
 class QuantumIndexPayload(Payload):
     def __init__(self):
         super().__init__("q_index")
+
+
+class MeasurementPayload(Payload):
+    def __init__(self):
+        super().__init__("measurement")

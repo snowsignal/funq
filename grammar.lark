@@ -12,7 +12,7 @@ SINGLE_COMMENT: "//" /[^\n]/*
 %ignore SINGLE_COMMENT
 
 // A function is a segment of code that is inserted inline to the program
-function_def: "func" f_ident "(" arg_list? ")" ("->" type)? block
+function_def: "func" f_ident "(" arg_list? ")" block
 
 function_call: f_ident "(" call_list ")"
 
@@ -27,7 +27,7 @@ f_ident: /[a-zA-Z_][a-zA-Z0-9_]*/
 v_ident: /[a-zA-Z_][a-zA-Z0-9_]*/
 
 // A type identifier
-type: /[a-zA-Z_][a-zA-Z0-9_]*/ ("?")?
+type: /[a-zA-Z_][a-zA-Z0-9_]*/
 
 // An unsigned integer (aka whole number)
 uint: /[0-9]+/
@@ -42,7 +42,7 @@ arg: v_ident ":" type
 block: "{" stmt* "}"
 
 // A statement can either be a function call, declaration, return statement,
-stmt: (function_call | return | declaration | q_declaration | measurement ) ";" | if
+stmt: (function_call | declaration | q_declaration | measurement ) ";" | if
 
 declaration: type v_ident "=" expr
 
@@ -50,7 +50,7 @@ q_declaration: type v_ident "=" q_lit
 
 measurement: type v_ident "<-" q_expr
 
-return: "return" expr
+
 
 expr: paren | mul | div | add | sub | v_ident | uint
 
