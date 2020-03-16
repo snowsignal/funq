@@ -10,8 +10,8 @@ class AST:
     def __init__(self):
         self.top_level_scope = Scope(1, 1)
         self.context = self.top_level_scope
-        self.functions = []
-        self.regions = []
+        self.functions = {}
+        self.regions = {}
 
     def next(self) -> bool:
         i = self.context.placement()
@@ -55,9 +55,15 @@ class AST:
         else:
             return False
 
-    # Perform a final set of validation checks on the generated scopes
-    def validate(self):
-        pass
+    def add_function(self, name, scope):
+        if name in self.functions:
+            scope.raise_compiler_error("F4", info=name)
+        self.functions[name] = scope
+
+    def add_region(self, name, scope):
+        if name in self.functions:
+            scope.raise_compiler_error("R0", info=name)
+        self.regions[name] = scope
 
 
 class Scope:
@@ -66,7 +72,8 @@ class Scope:
     def __init__(self, line, column, scope_payload=None, super_scope=None):
         self.line = line
         self.column = column
-        self.var_identifiers = []
+        self.var_identifiers = {}
+        self.classical_registry = {}
         self.super_scope = super_scope
         self.sub_scopes = []
         if scope_payload is not None:
@@ -101,10 +108,60 @@ class Scope:
         for child in self.sub_scopes:
             child.print(indents=indents+1)
 
+    def validate(self):
+        if self.payload is not None:
+            self.payload.validate()
+        else:
+            pass
+
+    def scope_print(self, indents=0):
+        print(" " * indents + self.data + ":" + str(self.var_identifiers) + str(self.classical_registry))
+        for child in self.sub_scopes:
+            child.scope_print(indents=indents+1)
+
     def create_sub_scope(self, line, column, payload=None):
         s = Scope(line, column, scope_payload=payload, super_scope=self)
         self.sub_scopes.append(s)
         return s
+
+    def register_variable(self, name, v_type):
+        # Check that the type is valid
+        if not Types.is_valid(v_type.name):
+            v_type.raise_compiler_error("T0", info=v_type.name)
+        if name.name in self.var_identifiers.keys():
+            if Types.is_quantum(v_type.name):
+                name.raise_compiler_error("Q2", info=name.name)
+            else:
+                name.raise_compiler_error("C0", info=name.name)
+        else:
+            self.var_identifiers[name.name] = v_type
+
+    def get_type_for(self, v_name):
+        if v_name in self.var_identifiers:
+            return self.var_identifiers[v_name]
+        else:
+            if self.super_scope is not None:
+                t = self.super_scope.get_type_for(v_name)
+                return t
+            return None
+
+    def set_classical_value(self, name, value):
+        if name in self.var_identifiers:
+            self.classical_registry[name] = value
+            return True
+        else:
+            if self.super_scope is not None:
+                t = self.super_scope.set_classical_value(name, value)
+                return t
+            return False
+
+    def get_classical_value(self, name):
+        if name in self.classical_registry:
+            return self.classical_registry[name]
+        else:
+            if self.super_scope is not None:
+                return self.super_scope.get_classical_value(name)
+            return None
 
     def raise_compiler_error(self, error_code, info=""):
         raise CompilerError(error_code, self.line, self.column, info=info)
@@ -168,22 +225,43 @@ class ASTBuilder(Visitor):
     def after_visit_if(self, _):
         self.ast.jump_super()
 
-    def visit_expr(self, t):
+    def visit_sum(self, t):
         expr = t.children[0]
-        # There are many kinds of expressions. Check which one it is:
-        if expr.data == "paren" \
-            or expr.data == "v_ident" \
-            or expr.data == "uint":
-            return  # These will be processed by their own function
-        elif expr.data in ["mul", "div", "add", "sub"]:
+        print(expr.data)
+        if expr.data == "product":
+            return
+        elif expr.data in ["add", "sub"]:
             line, column = get_line_column(t)
             scope = self.ast.create_sub_scope(line, column, payload=OpPayload(expr.data))
             if not self.ast.jump_to(scope.ID):
                 raise Exception("could not jump to scope")
         else:
-            # We shouldn't reach this point. This is if expr.data does not match any
-            # of the current expression types.
             raise Exception("Invalid expression data")
+
+    def visit_product(self, t):
+        expr = t.children[0]
+        print(expr.data)
+        if expr.data == "atomic":
+            return
+        elif expr.data in ["mul", "div"]:
+            line, column = get_line_column(t)
+            scope = self.ast.create_sub_scope(line, column, payload=OpPayload(expr.data))
+            if not self.ast.jump_to(scope.ID):
+                raise Exception("could not jump to scope")
+        else:
+            raise Exception("Invalid expression data")
+
+    def after_visit_sum(self, t):
+        expr = t.children[0]
+        if expr.data == "product":
+            return
+        self.ast.jump_super()
+
+    def after_visit_product(self, t):
+        expr = t.children[0]
+        if expr.data == "atomic":
+            return
+        self.ast.jump_super()
 
     def visit_b_expr(self, t):
         op = t.children[0]
@@ -196,15 +274,6 @@ class ASTBuilder(Visitor):
             raise Exception("Invalid boolean expression data")
 
     def after_visit_b_expr(self, _):
-        self.ast.jump_super()
-
-    def after_visit_expr(self, t):
-        expr = t.children[0]
-        if expr.data == "paren" \
-                or expr.data == "v_ident" \
-                or expr.data == "string" \
-                or expr.data == "uint":
-            return
         self.ast.jump_super()
 
     def visit_block(self, t):
@@ -263,8 +332,8 @@ class ASTBuilder(Visitor):
             raise Exception("could not jump to scope")
 
     def after_visit_call_list(self, _):
-        # if self.ast.context.data == "call_list" or self.ast.context.super_scope.data == "call_list":
-        self.ast.jump_super()
+        if self.ast.context.data == "call_list" and not self.ast.context.super_scope.data == "call_list":
+            self.ast.jump_super()
 
     def visit_arg(self, t):
         line, column = get_line_column(t)

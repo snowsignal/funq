@@ -121,16 +121,25 @@ if __name__ == "__main__":
 
     from transpiler import Transpiler
     from state import State
+    from resolver import Resolver
+    from checker import ErrorChecker
+    from computation import ComputationHandler
+
+    a.ast.context.print()
+
+    r = Resolver(a.ast)
+
+    r.traverse()
 
     s = State(a.ast)
 
     s.build_from_ast()
-
+    e = ErrorChecker(a.ast)
+    e.traverse()
+    c = ComputationHandler(a.ast)
+    c.traverse()
     t = Transpiler(s)
+    t.transpile()
+    print("---- OUTPUT -----")
+    print(t.programs["Main"].emit())
 
-    a.ast.context.print()
-
-    #t.transpile()
-    from resolver import Resolver
-    r = Resolver(a.ast)
-    r.traverse()

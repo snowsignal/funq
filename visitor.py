@@ -32,8 +32,8 @@ class Visitor(TreeTraversal):
             func = getattr(self, "visit_" + t.data)
             func(t)
         except (AttributeError, TypeError) as e:
-            print(e)
-            return
+            if "visit_" not in str(e):
+                raise e
 
     def _post_process_tree(self, t):
         try:
@@ -57,15 +57,19 @@ class Transformer(TreeTraversal):
     def _traverse(self, t):
         if isinstance(t, Token):
             return
-        for i in range(0, len(t.children)):
-            t.children[i] = self._traverse(t.children[i])
         t = self._transform(t)
+        if t is not None:
+            for i, v in enumerate(t.children):
+                print(i)
+                t.children[i] = self._traverse(v)
+            t.children = [c for c in t.children if c is not None]
         return t
 
     def _transform(self, t):
         try:
             func = getattr(self, "transform_" + t.data)
             return func(t)
-        except (AttributeError, TypeError):
+        except (AttributeError, TypeError) as e:
+            print(e)
             return t
 

@@ -2,12 +2,13 @@ from visitor import Visitor
 from scope import Scope
 from standard_library import StandardLibrary
 from qasm import *
+from state import State
 
 
 # A Transpiler converts an AST into OpenQASM programs by visiting the nodes
 # and converting.
 class Transpiler:
-    def __init__(self, state):
+    def __init__(self, state: State):
         self.regions = state.regions
         self.functions = state.functions
         self.programs = {}
@@ -17,7 +18,7 @@ class Transpiler:
         for name in self.functions.keys():
             f = self.functions[name]
             self.generate_gate(name, f[0], f[1], f[2])
-        for name in self.regions.items():
+        for name in self.regions.keys():
             r = self.regions[name]
             self.generate_program(name, r[0], r[1])
 
@@ -30,6 +31,8 @@ class Transpiler:
 
     def generate_gate(self, func_name, cargs, qargs, block):
         instructions = self.convert_to_instructions(block)
+        cargs = [c.get_name().name for c in cargs]
+        qargs = [q.get_name().name for q in qargs]
         self.gates[func_name] = OpenQASMGate(func_name, cargs, qargs, instructions)
 
     def generate_program(self, name, qubits, block):
@@ -38,10 +41,15 @@ class Transpiler:
 
     def convert_to_instructions(self, stmt: Scope) -> list:
         if stmt.data == "block":
-            return [self.convert_to_instructions(s) for s in stmt.children]
+            instructions = []
+            for s in stmt.children:
+                instructions += self.convert_to_instructions(s)
+            return instructions
         elif stmt.data == "function_call":
-            cargs = stmt.get_call_list().get_classical_arguments()
-            qargs = stmt.get_call_list().get_quantum_arguments()
+            cargs = [self.convert_classical_arg(c)
+                     for c in stmt.get_call_list().get_classical_arguments()]
+            qargs = [self.convert_quantum_arg(q)
+                     for q in stmt.get_call_list().get_quantum_arguments()]
             # Is this in the standard library?
             if StandardLibrary.is_standard(stmt.get_name().name):
                 return [FunctionCall(StandardLibrary.get_standard_name(stmt.get_name().name), cargs, qargs)]
@@ -49,11 +57,11 @@ class Transpiler:
                 return [FunctionCall(stmt.get_name().name, cargs, qargs)]
         elif stmt.data == "if":
             arg1, arg2 = stmt.get_args()
-            op = stmt.get_op()
+            op = stmt.get_op().get_operation()
             arg1 = self.convert_classical_arg(arg1)
             arg2 = self.convert_classical_arg(arg2)
             comp = Comparison(arg1, arg2, op)
-            sub_instructions = [self.convert_to_instructions(c) for c in stmt.get_block().children]
+            sub_instructions = self.convert_to_instructions(stmt.get_block())
             return [IfInstruction(comp, sub_instructions)]
         elif stmt.data == "q_decl":
             name = stmt.get_name().name
@@ -74,7 +82,17 @@ class Transpiler:
         elif arg.type == "v_ident":
             return CRegArgument(arg.name)
         else:
-            raise Exception("Unexpected argument type!")
+            raise Exception("Unexpected argument type: '" + arg.type + "'")
+
+    def convert_quantum_arg(self, arg):
+        if arg.type == "v_ident":
+            return QuantumRegArgument(arg.name)
+        elif arg.type == "q_slice":
+            start, end = arg.get_start_end()
+            return QuantumSliceArgument(arg.get_name().name, start, end)
+        elif arg.type == "q_index":
+            pos = arg.get_pos()
+            return QuantumIndexArgument(arg.get_name().name, pos)
 
 
 class OpenQASMProgram:

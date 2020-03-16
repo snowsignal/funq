@@ -1,7 +1,7 @@
 
 
 class Types:
-    classical_types = ["Const", "C[]"]
+    classical_types = ["Const"]
     quantum_types = ["Q", "Q[]"]
 
     @staticmethod
@@ -14,4 +14,4 @@ class Types:
 
     @staticmethod
     def is_valid(typename):
-        return Types.is_valid(typename) or Types.is_quantum(typename)
+        return Types.is_classical(typename) or Types.is_quantum(typename)

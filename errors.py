@@ -5,20 +5,23 @@ class ErrorRegistry:
         "S0": lambda x: "Unexpected character '" + x + "'"
     }
     logical_errors = {
+        "V0": lambda x: "Variable '" + x + "' is not defined",
+        "T0": lambda x: "Typename '" + x + "' does not name a valid type",
         "F0": lambda _: "Quantum variable declaration not allowed in function",
         "F1": lambda _: "Measurement of function not allowed",
         "F2": lambda _: "Incorrect number of arguments specified to function",
         "F3": lambda x: "Argument '" + x + "' passed to function has invalid type",
         "F4": lambda x: "Function name '" + x + "' is identical to a previously declared function name",
+        "F5": lambda _: "Arguments specified out of order to function",
         "R0": lambda x: "Region name '" + x + "' is identical to a previously declared region name",
-        "C0": lambda x: "",
-        "C1": lambda x: "",
+        "C0": lambda x: "Classical variable name '" + x + "' is identical to a previously declared variable",
+        "C1": lambda x: "Cannot pass a classical register as a function argument",
         "Q0": lambda _: "Expected quantum type in quantum variable declaration",
         "Q1": lambda x: "Quantum variable '" + x + "' allocates more qubits than allowed by the region",
-        "Q2": lambda x: "Quantum variable name '" + x + "' is identical to a previously declared quantum variable",
-        "Q3": lambda x: "Quantum variable name '" + x + "' is identical to a previously declared classical variable",
+        "Q2": lambda x: "Quantum variable name '" + x + "' is identical to a previously declared variable",
         "Q4": lambda x: "Quantum variable slice indexes '" + x[0] + "' to '" + x[1] + "' are out of bounds",
-        "Q5": lambda x: "Quantum variable index '" + x + "' is out of bounds"
+        "Q5": lambda x: "Quantum variable index '" + x + "' is out of bounds",
+        "Q6": lambda _: "Cannot pass a quantum register as a function argument"
     }
 
     @staticmethod

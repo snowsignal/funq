@@ -53,7 +53,9 @@ class FunctionPayload(Payload):
         for a in self.owning_scope.children:
             if a.data == "arg_list":
                 return a
-        return ArgListPayload()
+        a = ArgListPayload()
+        a.set_scope(self)
+        return a
 
     def validate(self):
         pass
@@ -102,6 +104,9 @@ class OpPayload(Payload):
         elif op == "div":
             return "/"
 
+    def get_operands(self):
+        return self.owning_scope.children
+
 
 class BoolOpPayload(Payload):
     def __init__(self, op):
@@ -126,18 +131,14 @@ class IfPayload(Payload):
 
     def get_args(self):
         comp = self.owning_scope.children[0].children
-        return comp[0], comp[2]
+        print(comp)
+        return comp[0], comp[1]
 
     def get_op(self):
-        comp = self.owning_scope.children[0]
-        if comp.data == "eq":
-            return "=="
-        elif comp.data == "neq":
-            return "!="
-        elif comp.data == "greater":
-            return ">"
-        elif comp.data == "lesser":
-            return "<"
+        return self.owning_scope.children[0]
+
+    def get_block(self):
+        return self.owning_scope.children[1]
 
 
 class FIdentPayload(Payload):
@@ -176,7 +177,7 @@ class UIntPayload(Payload):
         super().__init__("uint")
         self.value = val
 
-    def get_type(self):
+    def get_type_name(self):
         return "Const"
 
 
@@ -188,7 +189,7 @@ class CallListPayload(Payload):
         arguments = self.owning_scope.children
         classical_args = []
         for arg in arguments:
-            if Types.is_classical(arg.get_type()):
+            if Types.is_classical(arg.get_type_name()):
                 classical_args.append(arg)
         return classical_args
 
@@ -196,7 +197,7 @@ class CallListPayload(Payload):
         arguments = self.owning_scope.children
         quantum_args = []
         for arg in arguments:
-            if Types.is_quantum(arg.get_type()):
+            if Types.is_quantum(arg.get_type_name()):
                 quantum_args.append(arg)
         return quantum_args
 
@@ -247,8 +248,11 @@ class QuantumSlicePayload(Payload):
     def __init__(self):
         super().__init__("q_slice")
 
+    def get_name(self):
+        return self.owning_scope.children[0]
+
     def get_start_end(self):
-        return self.owning_scope.children[0].value, self.owning_scope.children[1].value
+        return self.owning_scope.children[1].value, self.owning_scope.children[2].value
 
     def get_type_name(self):
         return "Q"
@@ -275,6 +279,9 @@ class ClassicalDeclarationPayload(Payload):
     def get_expression(self):
         return self.owning_scope.children[2]
 
+    def get_length(self):
+        return 32
+
 
 class QuantumDeclarationPayload(Payload):
     def __init__(self):
@@ -299,6 +306,15 @@ class QubitPayload(Payload):
 class QuantumIndexPayload(Payload):
     def __init__(self):
         super().__init__("q_index")
+
+    def get_name(self):
+        return self.owning_scope.children[0]
+
+    def get_type_name(self):
+        return "Q"
+
+    def get_pos(self) -> int:
+        return self.owning_scope.children[1].value
 
 
 class MeasurementPayload(Payload):

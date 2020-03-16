@@ -27,7 +27,7 @@ f_ident: /[a-zA-Z_][a-zA-Z0-9_]*/
 v_ident: /[a-zA-Z_][a-zA-Z0-9_]*/
 
 // A type identifier
-type: /[a-zA-Z_][a-zA-Z0-9_]*/
+type: /[a-zA-Z_][a-zA-Z0-9_]*(\[\])?/
 
 // An unsigned integer (aka whole number)
 uint: /[0-9]+/
@@ -48,11 +48,9 @@ declaration: type v_ident "=" expr
 
 q_declaration: type v_ident "=" q_lit
 
-measurement: type v_ident "<-" q_expr
+measurement: v_ident "<-" q_expr
 
-
-
-expr: paren | mul | div | add | sub | v_ident | uint
+expr: atomic | product | sum
 
 if: "if" b_expr block
 
@@ -68,13 +66,19 @@ lesser: expr "<" expr
 
 paren: "(" expr ")"
 
-mul: expr "*" expr
+sum: product
+     | add
+     | sub
 
-div: expr "/" expr
+add: sum "+" product
+sub: sum "-" product
 
-add: expr "+" expr
+product: atomic | mul | div
 
-sub: expr "-" expr
+mul: product "*" atomic
+div: product "/" atomic
+
+atomic: uint | v_ident | "(" sum ")" -> paren
 
 q_expr: q_slice | q_index
 
