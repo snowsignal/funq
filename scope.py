@@ -3,6 +3,7 @@ from lark import Token, Tree
 from payloads import *
 from copy import deepcopy
 from math import ceil
+from errors import CompilerError
 
 
 class AST:
@@ -10,7 +11,7 @@ class AST:
         self.top_level_scope = Scope(1, 1)
         self.context = self.top_level_scope
         self.functions = []
-        self.classes = []
+        self.regions = []
 
     def next(self) -> bool:
         i = self.context.placement()
@@ -65,7 +66,6 @@ class Scope:
     def __init__(self, line, column, scope_payload=None, super_scope=None):
         self.line = line
         self.column = column
-        self.function_identifiers = []
         self.var_identifiers = []
         self.super_scope = super_scope
         self.sub_scopes = []
@@ -105,6 +105,9 @@ class Scope:
         s = Scope(line, column, scope_payload=payload, super_scope=self)
         self.sub_scopes.append(s)
         return s
+
+    def raise_compiler_error(self, error_code, info=""):
+        raise CompilerError(error_code, self.line, self.column, info=info)
 
     def _scope_with_id(self, ID):
         if self.ID == ID:

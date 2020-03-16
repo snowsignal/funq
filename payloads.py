@@ -56,9 +56,7 @@ class FunctionPayload(Payload):
         return ArgListPayload()
 
     def validate(self):
-        # Verify this function does not name collide
-        if not self.owning_scope.register_identifier(self.get_name().name):
-            raise CompilerError("F4", self.get_name().name)
+        pass
 
 
 class FunctionCallPayload(Payload):
