@@ -165,7 +165,7 @@ class QuantumInitialization(Instruction):
         self.size = size
 
     def emit(self) -> str:
-        return "qreg " + self.name + "(" + str(self.size) + ");"
+        return "qreg " + self.name + "(" + str(self.size) + ");\n"
 
 
 class ClassicalInitialization(Instruction):
@@ -175,7 +175,7 @@ class ClassicalInitialization(Instruction):
         self.size = size
 
     def emit(self) -> str:
-        return "creg " + self.name + "(" + str(self.size) + ");"
+        return "creg " + self.name + "(" + str(self.size) + ");\n"
 
 
 class MeasurementInstruction(Instruction):
@@ -186,7 +186,7 @@ class MeasurementInstruction(Instruction):
         self.m_name = m_name
 
     def emit(self) -> str:
-        emission = ""
+        emission = ClassicalInitialization(self.name, self.size).emit()
         for i in range(0, self.size):
             emission += self.name + "[" + str(i) + "] <- " + self.m_name + "[" + str(i) + "];\n"
         return emission
