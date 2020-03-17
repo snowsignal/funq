@@ -39,8 +39,7 @@ class Visitor(TreeTraversal):
         try:
             func = getattr(self, "after_visit_" + t.data)
             func(t)
-        except (AttributeError, TypeError) as e:
-            print(e)
+        except (AttributeError, TypeError):
             return
 
     def visit_any(self, t):
@@ -60,7 +59,6 @@ class Transformer(TreeTraversal):
         t = self._transform(t)
         if t is not None:
             for i, v in enumerate(t.children):
-                print(i)
                 t.children[i] = self._traverse(v)
             t.children = [c for c in t.children if c is not None]
         return t
@@ -69,7 +67,6 @@ class Transformer(TreeTraversal):
         try:
             func = getattr(self, "transform_" + t.data)
             return func(t)
-        except (AttributeError, TypeError) as e:
-            print(e)
+        except (AttributeError, TypeError):
             return t
 

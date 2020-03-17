@@ -54,7 +54,8 @@ class FunctionPayload(Payload):
             if a.data == "arg_list":
                 return a
         a = ArgListPayload()
-        a.set_scope(self)
+        a.set_scope(self.owning_scope)
+        a.set_empty(True)
         return a
 
     def validate(self):
@@ -205,9 +206,16 @@ class CallListPayload(Payload):
 class ArgListPayload(Payload):
     def __init__(self):
         super().__init__("arg_list")
+        self.is_empty = False
+
+    def set_empty(self, empty):
+        self.is_empty = empty
 
     def get_arguments(self):
-        return self.owning_scope.children
+        if self.is_empty:
+            return []
+        else:
+            return self.owning_scope.children
 
 
 class ArgPayload(Payload):
@@ -234,7 +242,7 @@ class RegionPayload(Payload):
     def get_qubit_cap(self):
         for c in self.owning_scope.children:
             if c.type == "uint":
-                return c
+                return c.value
         raise Exception("No qubit count for region!")
 
     def get_block(self):
@@ -265,6 +273,12 @@ class QuantumLiteralPayload(Payload):
     def get_qubit_length(self):
         return len(self.owning_scope.children)
 
+    def get_qubits(self):
+        bits = []
+        for c in self.owning_scope.children:
+            bits.append("1" if c.value else "0")
+        return bits
+
 
 class ClassicalDeclarationPayload(Payload):
     def __init__(self):
@@ -280,7 +294,24 @@ class ClassicalDeclarationPayload(Payload):
         return self.owning_scope.children[2]
 
     def get_length(self):
-        return 32
+        return self.get_expression().get_length()
+
+    def get_bits(self):
+        return self.get_expression().get_bits()
+
+
+class ClassicalLiteralPayload(Payload):
+    def __init__(self):
+        super().__init__("c_lit")
+
+    def get_length(self):
+        return len(self.owning_scope.children)
+
+    def get_bits(self):
+        bits = []
+        for c in self.owning_scope.children:
+            bits.append("1" if c.value else "0")
+        return bits
 
 
 class QuantumDeclarationPayload(Payload):
@@ -293,13 +324,19 @@ class QuantumDeclarationPayload(Payload):
     def get_name(self):
         return self.owning_scope.children[1]
 
+    def get_expression(self):
+        return self.owning_scope.children[2]
+
     def get_length(self):
-        return self.owning_scope.children[2].get_qubit_length()
+        return self.get_expression().get_qubit_length()
+
+    def get_bits(self):
+        return self.get_expression().get_qubits()
 
 
-class QubitPayload(Payload):
+class BitPayload(Payload):
     def __init__(self, value: bool):
-        super().__init__("qubit")
+        super().__init__("bit")
         self.value = value
 
 

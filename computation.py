@@ -6,13 +6,19 @@ import operator
 
 
 class ComputationHandler(Transformer):
+    """
+    The ComputationHandler transforms the AST by registering declarations of constant variables, and then
+    replacing identifiers for constant variables in the tree with the declared constant values. Finally, it evaluates
+    expressions that add, subtract, multiply, and divide constant numbers, replacing those expressions in the tree with
+    a single numeric value.
+    """
     def __init__(self, ast):
         ast.go_to_top()
         super().__init__(ast.context)
 
-    def is_classical(self, scope):
-        print("Finding type!" + scope.get_type_for(scope.name).name)
-        return Types.is_classical(scope.get_type_for(scope.name).name)
+    def is_const(self, scope):
+        typename = scope.get_type_for(scope.name).name
+        return Types.is_classical(typename) and not Types.is_register(typename)
 
     def evaluate_expression(self, scope):
         if scope.data == "uint":
@@ -39,13 +45,11 @@ class ComputationHandler(Transformer):
             return scope
 
     def transform_v_ident(self, scope):
-        if self.is_classical(scope):
+        if self.is_const(scope):
             value = scope.get_classical_value(scope.name)
             s = Scope(scope.line, scope.column, scope_payload=UIntPayload(value), super_scope=scope.super_scope)
-            print(s)
             return s
         else:
-            print("Dang it! \"" + scope.name + "\" is not classical!")
             return scope
 
     def transform_operation(self, scope):

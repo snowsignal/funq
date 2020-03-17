@@ -23,10 +23,8 @@ class Transpiler:
             self.generate_program(name, r[0], r[1])
 
     def visit_region(self, region):
-        print("Visiting region")
         name = region.get_name().name
         instructions = self.convert_to_instructions(region.get_block())
-        print(instructions)
         self.regions[name] = instructions
 
     def generate_gate(self, func_name, cargs, qargs, block):
@@ -37,7 +35,7 @@ class Transpiler:
 
     def generate_program(self, name, qubits, block):
         instructions = self.convert_to_instructions(block)
-        self.programs[name] = OpenQASMProgram(qubits, instructions)
+        self.programs[name] = OpenQASMProgram(qubits, instructions, [])
 
     def convert_to_instructions(self, stmt: Scope) -> list:
         if stmt.data == "block":
@@ -66,11 +64,13 @@ class Transpiler:
         elif stmt.data == "q_decl":
             name = stmt.get_name().name
             size = stmt.get_length()
-            return [QuantumInitialization(name, size)]
+            bits = stmt.get_bits()
+            return [QuantumInitialization(name, size, bits)]
         elif stmt.data == "c_decl":
             name = stmt.get_name().name
             size = stmt.get_length()
-            return [ClassicalInitialization(name, size)]
+            bits = stmt.get_bits()
+            return [ClassicalInitialization(name, size, bits)]
         elif stmt.data == "measurement":
             raise Exception("Unimplemented")
         else:
@@ -96,9 +96,10 @@ class Transpiler:
 
 
 class OpenQASMProgram:
-    def __init__(self, qubits, instructions):
+    def __init__(self, qubits: int, instructions: list, dependencies: list):
         self.qubits = qubits
         self.instructions = instructions
+        self.dependencies = dependencies
 
     def add_instruction(self, instructions):
         self.instructions += instructions

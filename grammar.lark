@@ -11,7 +11,7 @@ region: "region" r_ident "<" uint ">" block
 SINGLE_COMMENT: "//" /[^\n]/*
 %ignore SINGLE_COMMENT
 
-// A function is a segment of code that is inserted inline to the program
+// A function is a series of transformations performed on a function
 function_def: "func" f_ident "(" arg_list? ")" block
 
 function_call: f_ident "(" call_list ")"
@@ -44,11 +44,13 @@ block: "{" stmt* "}"
 // A statement can either be a function call, declaration, return statement,
 stmt: (function_call | declaration | q_declaration | measurement ) ";" | if
 
-declaration: type v_ident "=" expr
+declaration: type v_ident "=" (expr | c_lit)
 
 q_declaration: type v_ident "=" q_lit
 
-measurement: v_ident "<-" q_expr
+measurement: v_ident "[" expr ":" "]" "<-" q_expr
+
+c_lit: "#" bit+
 
 expr: atomic | product | sum
 
@@ -86,9 +88,9 @@ q_slice: v_ident "[" expr ":" expr "]"
 
 q_index: v_ident "[" expr "]"
 
-q_lit: "^" qubit+ "^"
+q_lit: "^" bit+ "^"
 
-qubit: ONE | ZERO
+bit: ONE | ZERO
 
 ONE: "1"
 

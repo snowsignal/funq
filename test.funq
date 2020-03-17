@@ -4,10 +4,9 @@ func F(q: Q, q2: Q) {
 }
 
 region Main<10> {
-  Const size = 10;
-  Q[] q1 = ^1111111111^;
-  hadamard (q1[0:size-1]);
-  if size > 5 {
-    F (q1[0], q1[1:size-1]);
+  Const asdf = 100;
+  Q[] q1 = ^0^;
+  if asdf == 100 {
+    hadamard (q1);
   }
 }

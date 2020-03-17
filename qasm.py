@@ -159,20 +159,22 @@ class IfInstruction(Instruction):
 
 
 class QuantumInitialization(Instruction):
-    def __init__(self, name, size):
+    def __init__(self, name, size, bits):
         super().__init__("q_init")
         self.name = name
         self.size = size
+        self.bits = bits
 
     def emit(self) -> str:
         return "qreg " + self.name + "(" + str(self.size) + ");\n"
 
 
 class ClassicalInitialization(Instruction):
-    def __init__(self, name, size):
+    def __init__(self, name, size, bits):
         super().__init__("c_init")
         self.name = name
         self.size = size
+        self.bits = bits
 
     def emit(self) -> str:
         return "creg " + self.name + "(" + str(self.size) + ");\n"

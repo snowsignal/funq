@@ -1,7 +1,39 @@
 from sys import argv
+from ast_builder import ASTBuilder
+from checker import ErrorChecker
+from computation import ComputationHandler
+from errors import CompilerError
+from output import Output
+from parser import parse_file
+from resolver import Resolver
+from state import State
+from transpiler import Transpiler
 
 
 class CommandLineInterface:
+    """
+    The CLI tells what parts of the compiler should run, and ends execution early if something fails. It also parses
+    the arguments
+    """
+    help_screen = """
+Usage: <PROGRAM> <INPUT> [OPTIONS]
+where <INPUT> is a valid relative or absolute filename.
+
+The funq compiler compiles a file of Funq code into a set of OpenQASM files,
+each one for a specific region (circuit). Below are some options for this
+compilation process.
+
+Options:
+-h, --help                                     -> Prints this help screen
+-l <PATH>, --location <PATH>                   -> Specifies a location to output files to 
+                                                   (default is the folder 'funq_build')
+-o <REGION> <FILE>, --output <REGION> <FILE>   -> Specifies what a compiled region should be saved as.
+--stdout <REGION>                              -> Outputs compiled region with name <REGION> directly to STDOUT, in addition to
+                                                    saving it to a file.
+--no-default-save                              -> Tells the compiler to not output any files by default, besides the ones
+                                                    specifically defined. 
+                """
+
     def __init__(self, args=None):
         self.file_to_open = None
         self.output_folder = "./funq_build"
@@ -15,23 +47,11 @@ class CommandLineInterface:
 
         self.should_exit = self._load()
 
-    def should_exit(self):
+    def exit_now(self):
         return self.should_exit
 
     def print_help(self):
-        print("""
-Usage: funq <INPUT> [OPTIONS]
-where <INPUT> is a valid relative or absolute filename.
-Options:
--h, --help                                     -> Prints this help screen
--l <PATH>, --location <PATH>                   -> Specifies a location to output files to 
-                                                   (default is the folder 'funq_build')
--o <REGION> <FILE>, --output <REGION> <FILE>   -> Specifies what a compiled region should be saved as.
---stdout <REGION>                              -> Outputs compiled region with name <REGION> directly to STDOUT, in addition to
-                                                    saving it to a file.
---no-default-save                              -> Tells the compiler to not output any files by default, besides the ones
-                                                    specifically defined. 
-""")
+        print(self.help_screen)
 
     def interface_error(self, msg):
         print("--- ERROR ---")
@@ -40,7 +60,7 @@ Options:
 
     def _load(self):
         if len(self.args) == 0:
-            self.interface_error("No input file specified\nUse 'funq -h' for help.")
+            self.interface_error("No input file specified\nUse '<PROGRAM> -h' for help.")
             return True
 
         def get_next_or_err(i, args, expected=""):
@@ -91,57 +111,59 @@ Options:
                 return True
         return False
 
-
-
-
     def main(self):
         # Main function for the compiler
+        try:
+            # Step One: Parse the input file
+            symbol_tree = parse_file(self.file_to_open)
 
-        # Step One: Open the input file
-        with open(self.file_to_open) as f:
-            pass
+            # Step Two: Build the symbol tree into an abstract syntax tree
+            builder = ASTBuilder(symbol_tree)
+            builder.traverse()
+            ast = builder.ast
+            ast.go_to_top()
+            del builder
+
+            # Step Three: Perform internal resolution of expression types and check
+            # that all identifiers are valid
+            resolver = Resolver(ast)
+            resolver.traverse()
+            del resolver
+
+            # Step Four: Check for errors
+            checker = ErrorChecker(ast)
+            checker.traverse()
+            if checker.errors_occurred():
+                checker.print_errors()
+                return
+            del checker
+
+            # Step Five: Resolve constant expressions
+            comp = ComputationHandler(ast)
+            comp.traverse()
+            del comp
+
+            # Step Six: Transpile the AST into OpenQASM
+            s = State(ast)
+            s.build_from_ast()
+            transpiler = Transpiler(s)
+            transpiler.transpile()
+
+            # Step Seven: Output the generated code
+            files = Output.generate_output(transpiler.programs, transpiler.gates)
+            for file in files:
+                print(file)
+        except Exception as e:
+            raise e
+
 
 def run_application(arg_list: list) -> None:
     command_line_interface = CommandLineInterface(args=arg_list)
-
+    if not command_line_interface.exit_now():
+        command_line_interface.main()
 
 
 if __name__ == "__main__":
-    #a = argv[1:]
-    #run_application(a)
-    from parser import parse_file
-    from scope import ASTBuilder
-
-    f = parse_file("test.funq")
-
-    print(f.pretty("-"))
-
-    a = ASTBuilder(f)
-    a.traverse()
-
-    from transpiler import Transpiler
-    from state import State
-    from resolver import Resolver
-    from checker import ErrorChecker
-    from computation import ComputationHandler
-
-    a.ast.context.print()
-
-    r = Resolver(a.ast)
-
-    r.traverse()
-
-    s = State(a.ast)
-
-    s.build_from_ast()
-    e = ErrorChecker(a.ast)
-    e.traverse()
-    c = ComputationHandler(a.ast)
-    c.traverse()
-    t = Transpiler(s)
-    t.transpile()
-    print("---- OUTPUT -----")
-    for gate in t.gates:
-        print(t.gates[gate].emit())
-    print(t.programs["Main"].emit())
+    a = argv[1:]
+    run_application(a)
 
