@@ -47,3 +47,8 @@ class ComputationHandler(Transformer):
         else:
             print("Dang it! \"" + scope.name + "\" is not classical!")
             return scope
+
+    def transform_operation(self, scope):
+        value = self.evaluate_expression(scope)
+        s = Scope(scope.line, scope.column, scope_payload=UIntPayload(value), super_scope=scope.super_scope)
+        return s

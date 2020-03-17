@@ -141,5 +141,7 @@ if __name__ == "__main__":
     t = Transpiler(s)
     t.transpile()
     print("---- OUTPUT -----")
+    for gate in t.gates:
+        print(t.gates[gate].emit())
     print(t.programs["Main"].emit())
 

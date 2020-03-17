@@ -1,5 +1,13 @@
+func F(q: Q, q2: Q) {
+  hadamard(q);
+  cx(q, q2);
+}
+
 region Main<10> {
-  Const c = 100;
-  Const c2 = c + 4 * c * c;
-  hadamard(c2);
+  Const size = 10;
+  Q[] q1 = ^1111111111^;
+  hadamard (q1[0:size-1]);
+  if size > 5 {
+    F (q1[0], q1[1:size-1]);
+  }
 }
