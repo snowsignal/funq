@@ -40,6 +40,14 @@ class AST:
 
 
 class Scope:
+    """A node of the abstract syntax tree that stores meta-information.
+    Scope is a node in the tree, with an optional edge to a parent node,
+    and edges to child nodes. Each scope carries a payload, a polymorphic
+    packet of data.
+    Scope has defined attributes for 'data' and 'children' so it is compatible
+    with the traversal algorithms used in Visitor and Transformer.
+    """
+    # A global identifier counter, incremented each time a new Scope is initialized
     uid = 0
 
     def __init__(self, line: int, column: int, scope_payload: Payload = None, super_scope=None):
@@ -70,23 +78,21 @@ class Scope:
         else:
             raise AttributeError("Attribute '" + item + "' not found in Scope object")
 
+    # Used for internal debugging work
     def debug_print(self, indents=0):
         p = self.payload.__dict__ if self.payload is not None else {}
         print(" " * indents + self.data + ":<" + str(self.line) + "," + str(self.column) + ">(" + str(p) + ")")
         for child in self.sub_scopes:
             child.debug_print(indents=indents+1)
 
-    def validate(self):
-        if self.payload is not None:
-            self.payload.validate()
-        else:
-            pass
-
+    # Create a child node with a given line, column, and payload.
     def create_sub_scope(self, line, column, payload=None):
         s = Scope(line, column, scope_payload=payload, super_scope=self)
         self.sub_scopes.append(s)
         return s
 
+    # Store a variable's type and reference to its declaration in the tree
+    # inside the var_identifiers hash map.
     def register_variable(self, name, v_type):
         # Check that the type is valid
         if not Types.is_valid(v_type.name):
@@ -99,6 +105,8 @@ class Scope:
         else:
             self.var_identifiers[name.name] = (v_type, name)
 
+    # Attempt to retrieve a variable's type from identifier metadata, and recursively check parent nodes
+    # if this fails.
     def get_type_for(self, v_name):
         if v_name in self.var_identifiers:
             return self.var_identifiers[v_name][0]
@@ -108,6 +116,8 @@ class Scope:
                 return t
             return None
 
+    # Attempt to retrieve a variable's declaration scope from identifier metadata, and recursively check parent nodes
+    # for this data if this fails.
     def get_scope_for(self, v_name):
         if v_name in self.var_identifiers:
             return self.var_identifiers[v_name][1]
@@ -117,6 +127,7 @@ class Scope:
                 return t
             return None
 
+    # Define a value for a constant variable, and store it in this scope's hash map
     def set_classical_value(self, name, value):
         if name in self.var_identifiers:
             self.classical_registry[name] = value
@@ -127,6 +138,8 @@ class Scope:
                 return t
             return False
 
+    # Attempt to retrieve the value of a constant variable, and recursively check parent nodes for this data if
+    # this fails.
     def get_classical_value(self, name):
         if name in self.classical_registry:
             return self.classical_registry[name]
@@ -135,9 +148,11 @@ class Scope:
                 return self.super_scope.get_classical_value(name)
             return None
 
+    # Raise a compiler error with this scope as the origin of the error
     def raise_compiler_error(self, error_code, info=""):
         raise CompilerError(error_code, self.line, self.column, info=info)
 
+    # Attempt to return a scope with a particular ID by recursively searching sub-scopes.
     def scope_with_id(self, ID):
         if self.ID == ID:
             return self
