@@ -1,13 +1,17 @@
-
+from standard_library import StandardLibrary
 
 class State:
     def __init__(self, ast):
-        self.ast = ast
         self.functions = {}
         self.regions = {}
+        for name in ast.regions.keys():
+            region = ast.regions[name]
+            self.register_region(name, region)
+        for name in ast.functions.keys():
+            function = ast.functions[name]
+            self.register_function(name, function)
 
-    def register_function(self, scope):
-        name: str = scope.get_name().name
+    def register_function(self, name, scope):
         block = scope.get_block()
         classical_args = scope.get_classical_arguments()
         quantum_args = scope.get_quantum_arguments()
@@ -16,8 +20,7 @@ class State:
         else:
             self.functions[name] = (classical_args, quantum_args, block)
 
-    def register_region(self, scope):
-        name: str = scope.get_name().name
+    def register_region(self, name, scope):
         qubits: int = scope.get_qubit_cap()
         block = scope.get_block()
         if name in self.regions:
@@ -25,15 +28,15 @@ class State:
         else:
             self.regions[name] = (qubits, block)
 
-    def build_from_ast(self):
-        # Jump to the top scope
-        self.ast.go_to_top()
-        # Register functions and regions
-        for scope in self.ast.context.sub_scopes:
-            if scope.payload.type == "function":
-                # Register function
-                self.register_function(scope)
-            elif scope.payload.type == "region":
-                # Register region
-                self.register_region(scope)
-
+    def get_arguments_for(self, function_name):
+        if function_name in self.functions.keys():
+            scope = self.functions[function_name]
+            args = scope.get_arg_list()
+            str_args = []
+            for arg in args.get_arguments():
+                name = arg.get_name().name
+                type = arg.get_type().name
+                str_args.append((name, type))
+            return str_args
+        elif StandardLibrary.is_standard(function_name):
+            return StandardLibrary.get_standard_args(function_name)

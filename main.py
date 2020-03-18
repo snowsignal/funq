@@ -117,6 +117,8 @@ Options:
             # Step One: Parse the input file
             symbol_tree = parse_file(self.file_to_open)
 
+            print(symbol_tree.pretty("-"))
+
             # Step Two: Build the symbol tree into an abstract syntax tree
             builder = ASTBuilder(symbol_tree)
             builder.traverse()
@@ -130,12 +132,11 @@ Options:
             resolver.traverse()
             del resolver
 
+            s = State(ast)
+
             # Step Four: Check for errors
-            checker = ErrorChecker(ast)
+            checker = ErrorChecker(ast, s)
             checker.traverse()
-            if checker.errors_occurred():
-                checker.print_errors()
-                return
             del checker
 
             # Step Five: Resolve constant expressions
@@ -144,8 +145,6 @@ Options:
             del comp
 
             # Step Six: Transpile the AST into OpenQASM
-            s = State(ast)
-            s.build_from_ast()
             transpiler = Transpiler(s)
             transpiler.transpile()
 
@@ -153,8 +152,8 @@ Options:
             files = Output.generate_output(transpiler.programs, transpiler.gates)
             for file in files:
                 print(file)
-        except Exception as e:
-            raise e
+        except CompilerError as e:
+            print(e)
 
 
 def run_application(arg_list: list) -> None:

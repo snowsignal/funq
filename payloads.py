@@ -202,6 +202,9 @@ class CallListPayload(Payload):
                 quantum_args.append(arg)
         return quantum_args
 
+    def get_arguments(self) -> list:
+        return self.owning_scope.children
+
 
 class ArgListPayload(Payload):
     def __init__(self):
@@ -357,3 +360,12 @@ class QuantumIndexPayload(Payload):
 class MeasurementPayload(Payload):
     def __init__(self):
         super().__init__("measurement")
+
+    def get_r_name(self):
+        return self.owning_scope.children[0]
+
+    def get_r_start(self):
+        return self.owning_scope.children[1]
+
+    def get_q_expr(self):
+        return self.owning_scope.children[2]

@@ -1,12 +1,16 @@
-func F(q: Q, q2: Q) {
-  hadamard(q);
-  cx(q, q2);
+region Main<4> {
+  Q[] q1 = ^000^;
+  Q[] q2 = ^0^;
+  C[] res = #000;
+  if res == 0 {
+    hadamard(q1[0:2]);
+    hadamard(q2[0]);
+  }
+  res[1:] <- q1[0:1];
+  res[2:] <- q2[0];
 }
 
-region Main<10> {
-  Const asdf = 100;
-  Q[] q1 = ^0^;
-  if asdf == 100 {
-    hadamard (q1);
-  }
+func ASDF(q: Q, c: Const) {
+    hadamard(q);
+    universal(c, c, c, q);
 }

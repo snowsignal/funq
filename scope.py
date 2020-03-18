@@ -1,5 +1,4 @@
 from payloads import Payload
-from copy import deepcopy
 from errors import CompilerError
 from builtin_types import Types
 
@@ -10,30 +9,6 @@ class AST:
         self.context = self.top_level_scope
         self.functions = {}
         self.regions = {}
-
-    def next(self) -> bool:
-        i = self.context.placement()
-        if i is not None:
-            self.context = self.context.super()
-            if self.context.sub_len() > i + 1:
-                self.context = self.context.sub_scope(i + 1)
-                return True
-            else:
-                return False
-        else:
-            return False
-
-    def previous(self) -> bool:
-        i = self.context.placement()
-        if i is not None:
-            self.context = self.context.super()
-            if i - 1 >= 0:
-                self.context = self.context.sub_scope(i - 1)
-                return True
-            else:
-                return False
-        else:
-            return False
 
     def create_sub_scope(self, line, column, payload: Payload = None):
         return self.context.create_sub_scope(line, column, payload=payload)
@@ -54,14 +29,14 @@ class AST:
             return False
 
     def add_function(self, name, scope):
-        if name in self.functions:
+        if name.name in self.functions:
             scope.raise_compiler_error("F4", info=name)
-        self.functions[name] = scope
+        self.functions[name.name] = scope
 
     def add_region(self, name, scope):
-        if name in self.functions:
+        if name.name in self.functions:
             scope.raise_compiler_error("R0", info=name)
-        self.regions[name] = scope
+        self.regions[name.name] = scope
 
 
 class Scope:
@@ -86,15 +61,10 @@ class Scope:
         # Increment the global ID nonce
         Scope.uid += 1
 
-    def __deepcopy__(self, memo):
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            setattr(result, k, deepcopy(v, memo))
-        return result
-
+    # This function override allows attributes of the payload to be accessed directly.
     def __getattr__(self, item):
+        # Since all payload functions start with "get_", this will only attempt to retrieve payload 'getter' functions,
+        # so a payload attribute won't accidentally get retrieved by mistake.
         if item[0:4] == "get_" or item in self.payload.__dict__:
             return super().__getattribute__("payload").__getattribute__(item)
         else:
@@ -127,11 +97,20 @@ class Scope:
             else:
                 name.raise_compiler_error("C0", info=name.name)
         else:
-            self.var_identifiers[name.name] = v_type
+            self.var_identifiers[name.name] = (v_type, name)
 
     def get_type_for(self, v_name):
         if v_name in self.var_identifiers:
-            return self.var_identifiers[v_name]
+            return self.var_identifiers[v_name][0]
+        else:
+            if self.super_scope is not None:
+                t = self.super_scope.get_type_for(v_name)
+                return t
+            return None
+
+    def get_scope_for(self, v_name):
+        if v_name in self.var_identifiers:
+            return self.var_identifiers[v_name][1]
         else:
             if self.super_scope is not None:
                 t = self.super_scope.get_type_for(v_name)

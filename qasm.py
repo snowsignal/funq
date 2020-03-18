@@ -166,7 +166,7 @@ class QuantumInitialization(Instruction):
         self.bits = bits
 
     def emit(self) -> str:
-        return "qreg " + self.name + "(" + str(self.size) + ");\n"
+        return "qreg " + self.name + "[" + str(self.size) + "];\n"
 
 
 class ClassicalInitialization(Instruction):
@@ -177,18 +177,21 @@ class ClassicalInitialization(Instruction):
         self.bits = bits
 
     def emit(self) -> str:
-        return "creg " + self.name + "(" + str(self.size) + ");\n"
+        return "creg " + self.name + "[" + str(self.size) + "];\n"
 
 
 class MeasurementInstruction(Instruction):
-    def __init__(self, name, size, m_name):
+    def __init__(self, r_name, start, q_name, q_start, q_end):
         super().__init__("measurement")
-        self.name = name
-        self.size = size
-        self.m_name = m_name
+        self.r_name = r_name
+        self.start = start
+        self.q_name = q_name
+        self.q_start = q_start
+        self.q_end = q_end
 
     def emit(self) -> str:
-        emission = ClassicalInitialization(self.name, self.size).emit()
-        for i in range(0, self.size):
-            emission += self.name + "[" + str(i) + "] <- " + self.m_name + "[" + str(i) + "];\n"
+        emission = ""
+        length = self.q_end - self.q_start + 1
+        for i in range(0, length):
+            emission += "measure " + self.q_name + "[" + str(self.q_start + i) + "] -> " + self.r_name + "[" + str(self.start + i) + "];\n"
         return emission

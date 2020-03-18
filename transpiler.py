@@ -1,4 +1,3 @@
-from visitor import Visitor
 from scope import Scope
 from standard_library import StandardLibrary
 from qasm import *
@@ -29,6 +28,8 @@ class Transpiler:
 
     def generate_gate(self, func_name, cargs, qargs, block):
         instructions = self.convert_to_instructions(block)
+        for c in cargs:
+            print(c.get_name().data)
         cargs = [c.get_name().name for c in cargs]
         qargs = [q.get_name().name for q in qargs]
         self.gates[func_name] = OpenQASMGate(func_name, cargs, qargs, instructions)
@@ -72,7 +73,19 @@ class Transpiler:
             bits = stmt.get_bits()
             return [ClassicalInitialization(name, size, bits)]
         elif stmt.data == "measurement":
-            raise Exception("Unimplemented")
+            expr = stmt.get_q_expr()
+            r_name = stmt.get_r_name().name
+            q_name = expr.get_name().name
+            r_start = stmt.get_r_start().value
+            if expr.data == "q_index":
+                q_start = expr.get_pos()
+                q_end = q_start
+                return [MeasurementInstruction(r_name, r_start, q_name, q_start, q_end)]
+            elif expr.data == "q_slice":
+                q_start, q_end = expr.get_start_end()
+                return [MeasurementInstruction(r_name, r_start, q_name, q_start, q_end)]
+            else:
+                raise Exception("Unimplemented")
         else:
             raise Exception("Unexpected statement type: " + str(stmt.__dict__))
 

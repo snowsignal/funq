@@ -1,5 +1,4 @@
-from lark import Token, Tree
-#from copy import deepcopy
+from lark import Token
 
 
 class TreeTraversal:
