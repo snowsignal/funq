@@ -1,16 +1,19 @@
 region Main<4> {
   Q[] q1 = ^000^;
   Q[] q2 = ^0^;
-  C[] res = #000;
-  if res == 0 {
+  C[] res = #0000;
+  Const test = 1;
+  if test == 0 {
     hadamard(q1[0:2]);
     hadamard(q2[0]);
   }
-  res[1:] <- q1[0:1];
-  res[2:] <- q2[0];
+  HadamardAndCx (q1[0:2], q2[0]);
+  res[0:] <- q1[0:2];
+  res[3:] <- q2[0];
 }
 
-func ASDF(q: Q, c: Const) {
-    hadamard(q);
-    universal(c, c, c, q);
+func HadamardAndCx(q1: Q, q2: Q) {
+  hadamard (q1);
+  hadamard (q2);
+  cx (q1, q2);
 }

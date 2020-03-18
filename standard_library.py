@@ -3,22 +3,30 @@ from payloads import *
 class StandardLibrary:
     functions = {
         "not": "NOT",
-        "universal": "U",
         "hadamard": "h",
         "cx": "cx",
         "x": "x",
         "y": "y",
-        "z": "z"
+        "z": "z",
+        "swap": "swap",
+        "ccx": "ccx",
+        "rx": "rx",
+        "ry": "ry",
+        "rz": "rz",
     }
 
     args = {
-        "not": [("arg", "Q")],
-        "universal": [("c1", "Const"), ("c2", "Const"), ("c3", "Const"), ("arg", "Q")],
-        "hadamard": [("arg", "Q")],
-        "cx": [("control", "Q"), ("arg", "Q")],
-        "x": [("arg", "Q")],
-        "y": [("arg", "Q")],
-        "z": [("arg", "Q")]
+        "not": [("target", "Q")],
+        "hadamard": [("target", "Q")],
+        "cx": [("control", "Q"), ("target", "Q")],
+        "x": [("target", "Q")],
+        "y": [("target", "Q")],
+        "z": [("target", "Q")],
+        "swap": [("first", "Q"), ("second", "Q")],
+        "ccx": [("control1", "Q"), ("control2", "Q"), ("target", "Q")],
+        "rx": [("rotation", "C"), ("target", "Q")],
+        "ry": [("rotation", "C"), ("target", "Q")],
+        "rz": [("rotation", "C"), ("target", "Q")]
     }
 
     @staticmethod

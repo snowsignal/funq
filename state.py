@@ -29,8 +29,8 @@ class State:
             self.regions[name] = (qubits, block)
 
     def get_arguments_for(self, function_name):
-        if function_name in self.functions.keys():
-            scope = self.functions[function_name]
+        if function_name.name in self.functions.keys():
+            scope = self.functions[function_name.name][2].super_scope
             args = scope.get_arg_list()
             str_args = []
             for arg in args.get_arguments():
@@ -38,5 +38,7 @@ class State:
                 type = arg.get_type().name
                 str_args.append((name, type))
             return str_args
-        elif StandardLibrary.is_standard(function_name):
-            return StandardLibrary.get_standard_args(function_name)
+        elif StandardLibrary.is_standard(function_name.name):
+            return StandardLibrary.get_standard_args(function_name.name)
+        else:
+            function_name.raise_compiler_error("F8", info=function_name.name)

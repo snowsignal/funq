@@ -8,6 +8,8 @@ from parser import parse_file
 from resolver import Resolver
 from state import State
 from transpiler import Transpiler
+from pathlib import Path
+from lark import UnexpectedCharacters
 
 
 class CommandLineInterface:
@@ -116,9 +118,6 @@ Options:
         try:
             # Step One: Parse the input file
             symbol_tree = parse_file(self.file_to_open)
-
-            print(symbol_tree.pretty("-"))
-
             # Step Two: Build the symbol tree into an abstract syntax tree
             builder = ASTBuilder(symbol_tree)
             builder.traverse()
@@ -150,10 +149,26 @@ Options:
 
             # Step Seven: Output the generated code
             files = Output.generate_output(transpiler.programs, transpiler.gates)
-            for file in files:
-                print(file)
+            for name, code in files:
+                if name in self.regions_to_stdout:
+                    print(code)
+                if name in self.region_file_map.keys():
+                    file_name = self.region_file_map[name]
+                else:
+                    if not self.save_all_by_default:
+                        continue
+                    file_name = name
+                Path(self.output_folder).mkdir(parents=True, exist_ok=True)
+                write_out = open(self.output_folder + "/" + file_name + ".qasm", mode="w")
+                write_out.write(code)
         except CompilerError as e:
             print(e)
+            exit(1)
+        except UnexpectedCharacters as u:
+            c = CompilerError("S0", u.line, u.column, info=str(u.allowed))
+            print(c)
+            exit(1)
+        exit(0)
 
 
 def run_application(arg_list: list) -> None:

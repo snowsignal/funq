@@ -92,7 +92,9 @@ class ErrorChecker(Visitor):
                     scope.raise_compiler_error("Q3", info=q_start)
             elif q_end >= c_size or slice_range + start >= c_size:
                 scope.raise_compiler_error("C3", info=(start, start + slice_range))
-            self.measured_variables.append(name)
+
+    def after_visit_measurement(self, scope):
+        self.measured_variables.append(scope.get_q_expr().get_name().name)
 
     def visit_function(self, scope):
         self.current_function = scope.get_name().name
@@ -100,10 +102,10 @@ class ErrorChecker(Visitor):
         self.verify_one_quantum_arg(scope.get_arg_list())
 
     def visit_function_call(self, scope):
-        name = scope.get_name().name
+        name = scope.get_name()
         if not self.in_region:
-            # Verify the function being called is not itself
-            if name == self.current_function:
+            # Verify the function being called is not itself, to prevent recursion
+            if name.name == self.current_function:
                 scope.raise_compiler_error("F1")
 
         args = self.state.get_arguments_for(name)
@@ -112,10 +114,11 @@ class ErrorChecker(Visitor):
             scope.raise_compiler_error("F2")
         for (i, c_arg) in enumerate(call_args):
             if args[i][1] != c_arg.get_type_name():
-                c_arg.raise_compiler_error("F3", info=(args[i][0], name, args[i][1], c_arg.get_type_name()))
-        # Check that the arg number is equal
+                c_arg.raise_compiler_error("F3", info=(args[i][0], name.name, args[i][1], c_arg.get_type_name()))
 
-
+    def visit_v_ident(self, scope):
+        if scope.name in self.measured_variables:
+            scope.raise_compiler_error("Q6")
 
     def after_visit_function(self, _):
         self.current_function = ""

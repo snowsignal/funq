@@ -132,7 +132,6 @@ class IfPayload(Payload):
 
     def get_args(self):
         comp = self.owning_scope.children[0].children
-        print(comp)
         return comp[0], comp[1]
 
     def get_op(self):

@@ -3,7 +3,7 @@ class ErrorRegistry:
     A static class that stores and generates errors.
     """
     syntax_errors = {
-        "S0": lambda x: "Unexpected character " + x
+        "S0": lambda x: "Unexpected token, was expecting one of: " + x
     }
     logical_errors = {
         "V0": lambda x: "Variable '" + x + "' is not defined",
@@ -16,17 +16,18 @@ Expected type '" + x[2] + "', got '" + x[3] + "'",
         "F5": lambda x: "Function name '" + x + "' is identical to a previously declared function name",
         "F6": lambda _: "Type of function argument can only be a constant or qubit",
         "F7": lambda x: "At least one quantum argument is required for function '" + x + "'",
+        "F8": lambda x: "Function '" + x + "' is not defined",
         "R0": lambda x: "Region name '" + x + "' is identical to a previously declared region name",
         "R1": lambda x: "Quantum variable '" + x[0] + "' allocates more qubits than allowed by the region '" + x[1] + "'",
         "C0": lambda x: "Classical variable name '" + x + "' is identical to a previously declared variable",
-        "C2": lambda x: "Classical registers must be initialized with a byte-array statement, not a constant value",
+        "C2": lambda _: "Classical registers must be initialized with a byte-array statement, not a constant value",
         "C3": lambda x: "Classical variable slice indexes '" + str(x[0]) + "' to '" + str(x[1]) + "' are out of bounds",
         "Q0": lambda _: "Expected quantum register type in quantum variable declaration",
         "Q1": lambda x: "Quantum variable name '" + x + "' is identical to a previously declared variable",
         "Q2": lambda x: "Quantum variable slice indexes '" + str(x[0]) + "' to '" + str(x[1]) + "' are out of bounds",
         "Q3": lambda x: "Quantum variable index '" + str(x) + "' is out of bounds",
-        "Q5": lambda x: "Quantum variable has already been measured, and cannot be measured again",
-        "Q6": lambda x: "Quantum variable cannot be used after being measured"
+        "Q5": lambda _: "Quantum variable has already been measured, and cannot be measured again",
+        "Q6": lambda _: "Quantum variable cannot be used after being measured"
     }
 
     @staticmethod

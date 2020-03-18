@@ -75,7 +75,65 @@ function GoodFunction(c: Const, q: Q) {
 Functions can be used across regions. Funq also comes with a small set of
 pre-defined functions in its standard library. These are:
 ```
+not (Q) -> NOT gate for a qubit
 cx (Q, Q)  -> Controlled NOT gate, with the first qubit acting as control.
-hadamard (Q) -> Quantum hadamard gate
-
+hadamard (Q) -> Quantum Hadamard gate
+x (Q) -> Quantum Pauli-X gate
+y (Q) -> Quantum Pauli-Y gate
+z (Q) -> Quantum Pauli-Z gate
+swap (Q, Q) -> Swaps the values of two qubits
+ccx (Q, Q, Q) -> CCNOT gate, also known as Toffoli gate.
+rx (C, Q) -> Rotational-X gate.
+ry (C, Q) -> Rotational-Y gate.
+rz (C, Q) -> Rotational-Z gate.
 ```
+
+### Indexing and slicing
+
+Quantum registers can be indexed or sliced to extract qubits, which can be passed to functions.
+
+When a quantum register is 'sliced', the function in which it is sliced is called once
+for each qubit in the slice. There can only be one slice in each function call within Funq.
+
+Here is an example of indexing and slicing:
+```
+Q[] q = ^000^;
+// This will call the hadamard gate three times, once for each qubit in the slice
+hadamard (q[0:2]);
+// This performs the NOT gate on the first qubit only
+not (q[0]);
+// This performs the Controlled-NOT gate twice, once for the second qubit and once
+// for the third qubit in the register.
+cx (q[0], q[1:2]);
+```
+
+### Measurement
+
+Quantum registers can be measured, and the results stored in a classical register.
+After part of a quantum register has been measured, it cannot be used again.
+
+Here is an example of measurement:
+```
+C[] reg = #000;
+Q[] q_reg = ^000^;
+hadamard(q_reg[0:2]);
+reg[0:] <- q_reg[0:2];
+```
+
+The last statement is the measure statement. This statement says to measure a slice of
+the quantum register and store it in the classical register, starting at index 0.
+
+### Running the compiled OpenQASM
+
+Valid OpenQASM code can be run directly on [IBM's website](quantum-computing.ibm.com).
+Register for an account, go to Circuit Composer, create a new circuit, go to the code
+tab, and paste in the generated code. Please note that the website's transpiler does
+not fully adhere to the OpenQASM language specification, so errors may occur
+due to unimplemented features.
+
+Please let me know of any issues or confusing problems you run into via the Github
+Issues tab. Enjoy programming in Funq!
+
+### Authors
+
+This code was written and published by Jackson Lewis. All rights reserved.
