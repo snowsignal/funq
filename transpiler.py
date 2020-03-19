@@ -1,4 +1,4 @@
-from scope import Scope
+from scope import Scope, MEASUREMENT_QUBIT_NAME
 from standard_library import StandardLibrary
 from qasm import *
 from state import State
@@ -19,7 +19,7 @@ class Transpiler:
             self.generate_gate(name, f[0], f[1], f[2])
         for name in self.regions.keys():
             r = self.regions[name]
-            self.generate_program(name, r[0], r[1])
+            self.generate_program(name, r[0], r[1], r[2])
 
     def visit_region(self, region):
         name = region.get_name().name
@@ -34,9 +34,9 @@ class Transpiler:
         qargs = [q.get_name().name for q in qargs]
         self.gates[func_name] = OpenQASMGate(func_name, cargs, qargs, instructions)
 
-    def generate_program(self, name, qubits, block):
+    def generate_program(self, name, qubits, block, measurement_qubit_needed):
         instructions = self.convert_to_instructions(block)
-        self.programs[name] = OpenQASMProgram(qubits, instructions, [])
+        self.programs[name] = OpenQASMProgram(qubits, instructions, [], measurement_qubit_needed)
 
     def convert_to_instructions(self, stmt: Scope) -> list:
         if stmt.data == "block":
@@ -109,16 +109,19 @@ class Transpiler:
 
 
 class OpenQASMProgram:
-    def __init__(self, qubits: int, instructions: list, dependencies: list):
+    def __init__(self, qubits: int, instructions: list, dependencies: list, measurement_qubit_needed: bool):
         self.qubits = qubits
         self.instructions = instructions
         self.dependencies = dependencies
+        self.measurement_qubit_needed = measurement_qubit_needed
 
     def add_instruction(self, instructions):
         self.instructions += instructions
 
     def emit(self):
         emission = ""
+        if self.measurement_qubit_needed:
+            emission += "qreg " + MEASUREMENT_QUBIT_NAME + "[1];\n"
         for instruction in self.instructions:
             emission += instruction.emit()
         return emission

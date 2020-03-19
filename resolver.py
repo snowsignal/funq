@@ -8,6 +8,8 @@ class Resolver(Visitor):
         self.ast.go_to_top()
         super().__init__(self.ast.context)
 
+        self.current_region = ""
+
     def visit_function(self, scope):
         name = scope.get_name()
         args = scope.get_arg_list()
@@ -19,12 +21,16 @@ class Resolver(Visitor):
 
     def visit_region(self, scope):
         name = scope.get_name()
+        self.current_region = name.name
         self.ast.add_region(name, scope)
 
     def visit_c_decl(self, scope):
         name = scope.get_name()
         v_type = scope.get_type()
         scope.super_scope.register_variable(name, v_type)
+        bits = scope.get_bits()
+        if "1" in bits:
+            self.ast.region_needs_measurement_qubit(self.current_region)
 
     def visit_q_decl(self, scope):
         name = scope.get_name()

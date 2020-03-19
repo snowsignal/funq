@@ -4,18 +4,19 @@ from checker import ErrorChecker
 from computation import ComputationHandler
 from errors import CompilerError
 from output import Output
-from parser import parse_file
+from input_parser import parse_file
 from resolver import Resolver
 from state import State
 from transpiler import Transpiler
 from pathlib import Path
 from lark import UnexpectedCharacters
+from math import ceil
 
 
 class CommandLineInterface:
     """
     The CLI tells what parts of the compiler should run, and ends execution early if something fails. It also parses
-    the arguments
+    the arguments passed to the compiler and considers them when producing output.
     """
     help_screen = """
 Usage: <PROGRAM> <INPUT> [OPTIONS]
@@ -55,6 +56,7 @@ Options:
     def print_help(self):
         print(self.help_screen)
 
+    # This is for all errors related to the CLI, and not the compilation process.
     def interface_error(self, msg):
         print("--- ERROR ---")
         print(msg)
@@ -76,7 +78,6 @@ Options:
             if i == 0 and arg != "-h" and arg != "--help":
                 # This HAS to be the input file
                 self.file_to_open = arg
-                # TODO: Verify file is valid
                 continue
             if skip_next > 0:
                 skip_next -= 1
@@ -118,6 +119,7 @@ Options:
         try:
             # Step One: Parse the input file
             symbol_tree = parse_file(self.file_to_open)
+
             # Step Two: Build the symbol tree into an abstract syntax tree
             builder = ASTBuilder(symbol_tree)
             builder.traverse()
@@ -131,6 +133,7 @@ Options:
             resolver.traverse()
             del resolver
 
+            # Initialize the program state, which will index the AST
             s = State(ast)
 
             # Step Four: Check for errors
@@ -150,22 +153,28 @@ Options:
             # Step Seven: Output the generated code
             files = Output.generate_output(transpiler.programs, transpiler.gates)
             for name, code in files:
+                # Print the region if it was specified in --stdout
                 if name in self.regions_to_stdout:
                     print(code)
+                # If the user defined a custom name for the region output, use that
                 if name in self.region_file_map.keys():
                     file_name = self.region_file_map[name]
                 else:
                     if not self.save_all_by_default:
                         continue
                     file_name = name
+                # Create build folder path if it does not already exist
                 Path(self.output_folder).mkdir(parents=True, exist_ok=True)
+                # Write the code
                 write_out = open(self.output_folder + "/" + file_name + ".qasm", mode="w")
                 write_out.write(code)
         except CompilerError as e:
             print(e)
             exit(1)
         except UnexpectedCharacters as u:
-            c = CompilerError("S0", u.line, u.column, info=str(u.allowed))
+            # Filter out tokens such as __ANON_1, etc.
+            c_set = set(c for c in u.allowed if c[0:2] != "__")
+            c = CompilerError("S0", ceil(u.line/2), u.column, info=str(c_set))
             print(c)
             exit(1)
         exit(0)
@@ -178,6 +187,6 @@ def run_application(arg_list: list) -> None:
 
 
 if __name__ == "__main__":
-    a = argv[1:]
-    run_application(a)
+    args = argv[1:]
+    run_application(args)
 

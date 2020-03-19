@@ -2,10 +2,11 @@ from standard_library import StandardLibrary
 
 class State:
     def __init__(self, ast):
+        self.ast = ast
         self.functions = {}
         self.regions = {}
         for name in ast.regions.keys():
-            region = ast.regions[name]
+            region = ast.regions[name][0]
             self.register_region(name, region)
         for name in ast.functions.keys():
             function = ast.functions[name]
@@ -26,7 +27,7 @@ class State:
         if name in self.regions:
             raise Exception("Region was already declared.")
         else:
-            self.regions[name] = (qubits, block)
+            self.regions[name] = (qubits, block, self.ast.does_region_need_measurement_qubit(name))
 
     def get_arguments_for(self, function_name):
         if function_name.name in self.functions.keys():

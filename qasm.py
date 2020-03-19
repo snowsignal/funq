@@ -1,3 +1,5 @@
+from scope import MEASUREMENT_QUBIT_NAME
+
 class InstructionArgument:
     def __init__(self, arg_type):
         self.arg_type = arg_type
@@ -176,8 +178,16 @@ class ClassicalInitialization(Instruction):
         self.size = size
         self.bits = bits
 
+    def measure_one(self, i):
+        return "x " + MEASUREMENT_QUBIT_NAME + "[0];\nmeasure " + MEASUREMENT_QUBIT_NAME + \
+               "[0] -> " + self.name + "[" + str(i) + "];\nreset " + MEASUREMENT_QUBIT_NAME + ";\n"
+
     def emit(self) -> str:
-        return "creg " + self.name + "[" + str(self.size) + "];\n"
+        emission = "creg " + self.name + "[" + str(self.size) + "];\n"
+        for i, bit in enumerate(self.bits):
+            if bit == "1":
+                emission += self.measure_one(i)
+        return emission
 
 
 class MeasurementInstruction(Instruction):

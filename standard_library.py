@@ -2,10 +2,9 @@ from payloads import *
 
 class StandardLibrary:
     functions = {
-        "not": "NOT",
         "hadamard": "h",
         "cx": "cx",
-        "x": "x",
+        "not": "x",
         "y": "y",
         "z": "z",
         "swap": "swap",
@@ -16,10 +15,9 @@ class StandardLibrary:
     }
 
     args = {
-        "not": [("target", "Q")],
         "hadamard": [("target", "Q")],
         "cx": [("control", "Q"), ("target", "Q")],
-        "x": [("target", "Q")],
+        "not": [("target", "Q")],
         "y": [("target", "Q")],
         "z": [("target", "Q")],
         "swap": [("first", "Q"), ("second", "Q")],

@@ -34,6 +34,10 @@ class ComputationHandler(Transformer):
         if scope.data == "uint":
             return scope.value
         elif scope.data == "v_ident":
+            if Types.is_quantum(scope.get_type_name()):
+                scope.raise_compiler_error("Q7")
+            elif Types.is_register(scope.get_type_name()):
+                scope.raise_compiler_error("C6")
             return scope.get_classical_value(scope.name)
         elif scope.data == "operation":
             op = scope.get_operation()

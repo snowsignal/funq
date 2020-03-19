@@ -2,6 +2,7 @@ from payloads import Payload
 from errors import CompilerError
 from builtin_types import Types
 
+MEASUREMENT_QUBIT_NAME = "cregmbit"
 
 class AST:
     def __init__(self):
@@ -36,7 +37,13 @@ class AST:
     def add_region(self, name, scope):
         if name.name in self.functions:
             scope.raise_compiler_error("R0", info=name)
-        self.regions[name.name] = scope
+        self.regions[name.name] = (scope, False)
+
+    def region_needs_measurement_qubit(self, name):
+        self.regions[name] = (self.regions[name][0], True)
+
+    def does_region_need_measurement_qubit(self, name):
+        return self.regions[name][1]
 
 
 class Scope:

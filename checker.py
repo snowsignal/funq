@@ -47,7 +47,7 @@ class ErrorChecker(Visitor):
     def visit_region(self, scope):
         self.in_region = True
         self.current_region = scope.get_name().name
-        self.region_counter = 0
+        self.region_counter = 1 if self.ast.does_region_need_measurement_qubit(self.current_region) else 0
         self.qubit_max = scope.get_qubit_cap()
 
     def after_visit_region(self, _):
@@ -57,14 +57,30 @@ class ErrorChecker(Visitor):
     def visit_q_decl(self, scope):
         if not self.in_region:
             scope.raise_compiler_error("F0")
+        t = scope.get_type()
+        if not Types.is_quantum(t.name) or not Types.is_register(t.name):
+            t.raise_compiler_error("Q0")
         length = scope.get_length()
         self.region_counter += length
         if self.region_counter > self.qubit_max:
-            scope.raise_compiler_error("R1", info=(scope.get_name().name, self.current_region))
+            if self.ast.does_region_need_measurement_qubit(self.current_region):
+                scope.raise_compiler_error("R1N", info=(scope.get_name().name, self.current_region))
+            else:
+                scope.raise_compiler_error("R1", info=(scope.get_name().name, self.current_region))
 
     def visit_c_decl(self, scope):
         if not self.in_region:
             scope.raise_compiler_error("F0")
+
+        t = scope.get_type()
+        if Types.is_quantum(t.name):
+            t.raise_compiler_error("C4")
+
+        expr = scope.get_expression()
+        if expr.data == "c_lit" and not Types.is_register(t.name):
+            expr.raise_compiler_error("C5")
+        elif Types.is_register(t.name) and not expr.data == "c_lit":
+            expr.raise_compiler_error("C5")
 
     def visit_measurement(self, scope):
         if not self.in_region:
