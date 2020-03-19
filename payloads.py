@@ -1,20 +1,20 @@
 from builtin_types import Types
-from errors import CompilerError
-
-TYPE_NO_RETURN = "_NO_RETURN"
 
 
-# A Payload is a packet of information stored in an AST node
 class Payload:
+    """A packet of information stored in a Scope.
+    Payloads store information about a particular scope. Most often, that
+    information is usually just the 'type' of the node, but it can also
+    store data if it is representing a token or fundamental atomic
+    of the language. Most payloads contain getter functions, which
+    simplify the process of retrieving data from child nodes.
+    """
     def __init__(self, p_type):
         self.type = p_type
         self.owning_scope = None
 
     def set_scope(self, scope):
         self.owning_scope = scope
-
-    def validate(self):
-        return
 
 
 class FunctionPayload(Payload):
@@ -53,6 +53,7 @@ class FunctionPayload(Payload):
         for a in self.owning_scope.children:
             if a.data == "arg_list":
                 return a
+        # We return this if there is no argument list in the function
         a = ArgListPayload()
         a.set_scope(self.owning_scope)
         a.set_empty(True)
