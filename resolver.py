@@ -1,5 +1,5 @@
-from errors import CompilerError
 from visitor import Visitor
+from builtin_types import Types
 
 # The Resolver transforms expressions and resolves types of identifiers
 class Resolver(Visitor):
@@ -28,9 +28,10 @@ class Resolver(Visitor):
         name = scope.get_name()
         v_type = scope.get_type()
         scope.super_scope.register_variable(name, v_type)
-        bits = scope.get_bits()
-        if "1" in bits:
-            self.ast.region_needs_measurement_qubit(self.current_region)
+        if Types.is_register(v_type):
+            bits = scope.get_bits()
+            if "1" in bits:
+                self.ast.region_needs_measurement_qubit(self.current_region)
 
     def visit_q_decl(self, scope):
         name = scope.get_name()

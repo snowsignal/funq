@@ -1,4 +1,21 @@
-region Main<1> {
-  Q[] q1 = ^1^;
-  C[] c = #1010101010;
+region Main<10> {
+  Q[] q1 = ^00000^;
+  Q[] q2 = ^00000^;
+  C[] c = #00000;
+  Const shouldmeasureq2 = 1;
+  if shouldmeasureq2 == 1 {
+    hadamard (q2[0]);
+    hadamardandcx(q2[1:4], q2[0]);
+    c[0:] <- q2[0:4];
+  }
+  if shouldmeasureq2 == 0 {
+    hadamard (q1[0]);
+    hadamardandcx(q1[1:4], q1[0]);
+    c[0:] <- q1[0:4];
+  }
+}
+
+func hadamardandcx(q1: Q, q2: Q) {
+  hadamard (q1);
+  cx (q1, q2);
 }

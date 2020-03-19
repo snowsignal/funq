@@ -167,8 +167,15 @@ class QuantumInitialization(Instruction):
         self.size = size
         self.bits = bits
 
+    def measure_one(self, i):
+        return "x " + self.name + "[" + str(i) + "];\n"
+
     def emit(self) -> str:
-        return "qreg " + self.name + "[" + str(self.size) + "];\n"
+        emission = "qreg " + self.name + "[" + str(self.size) + "];\n"
+        for i, bit in enumerate(self.bits):
+            if bit == "1":
+                emission += self.measure_one(i)
+        return emission
 
 
 class ClassicalInitialization(Instruction):

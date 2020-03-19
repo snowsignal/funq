@@ -112,11 +112,13 @@ class ASTBuilder(Visitor):
         self.insert_new_scope(t, payload=TypePayload(name))
 
     def visit_f_ident(self, t):
-        name = token_to_str(t.children[0])
+        # Function identifiers and variable identifiers must be put
+        # in lowercase to work in OpenQASM
+        name = token_to_str(t.children[0]).lower()
         self.insert_new_scope(t, payload=FIdentPayload(name))
 
     def visit_v_ident(self, t):
-        name = token_to_str(t.children[0])
+        name = token_to_str(t.children[0]).lower()
         self.insert_new_scope(t, payload=VIdentPayload(name))
 
     def visit_r_ident(self, t):

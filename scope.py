@@ -2,6 +2,7 @@ from payloads import Payload
 from errors import CompilerError
 from builtin_types import Types
 
+# This is the name of the qubit register used to initialize classical registers with known values.
 MEASUREMENT_QUBIT_NAME = "cregmbit"
 
 class AST:
