@@ -114,60 +114,83 @@ Options:
                 return True
         return False
 
+    def step_one(self):
+        symbol_tree = parse_file(self.file_to_open)
+        return symbol_tree
+
+    def step_two(self, symbol_tree):
+        builder = ASTBuilder(symbol_tree)
+        builder.traverse()
+        ast = builder.ast
+        ast.go_to_top()
+        return ast
+
+    def step_three(self, ast):
+        resolver = Resolver(ast)
+        resolver.traverse()
+
+    def step_four(self, ast, state):
+        checker = ErrorChecker(ast, state)
+        checker.traverse()
+
+    def step_five(self, ast):
+        comp = ComputationHandler(ast)
+        comp.traverse()
+
+    def step_six(self, state):
+        transpiler = Transpiler(state)
+        transpiler.transpile()
+        return transpiler.programs, transpiler.gates
+
+    def step_seven(self, programs, gates):
+        files = Output.generate_output(programs, gates)
+        for name, code in files:
+            # Print the region if it was specified in --stdout
+            if name in self.regions_to_stdout:
+                print(code)
+            # If the user defined a custom name for the region output, use that
+            if name in self.region_file_map.keys():
+                file_name = self.region_file_map[name]
+            else:
+                if not self.save_all_by_default:
+                    continue
+                file_name = name
+            # Create build folder path if it does not already exist
+            Path(self.output_folder).mkdir(parents=True, exist_ok=True)
+            # Write the code
+            write_out = open(self.output_folder + "/" + file_name + ".qasm", mode="w")
+            write_out.write(code)
+
     def main(self):
         # Main function for the compiler
         try:
             # Step One: Parse the input file
-            symbol_tree = parse_file(self.file_to_open)
+            symbol_tree = self.step_one()
 
             # Step Two: Build the symbol tree into an abstract syntax tree
-            builder = ASTBuilder(symbol_tree)
-            builder.traverse()
-            ast = builder.ast
-            ast.go_to_top()
-            del builder
+            ast = self.step_two(symbol_tree)
 
             # Step Three: Perform internal resolution of expression types and check
             # that all identifiers are valid
-            resolver = Resolver(ast)
-            resolver.traverse()
-            del resolver
+            self.step_three(ast)
 
             # Initialize the program state, which will index the AST
             s = State(ast)
 
             # Step Four: Check for errors
-            checker = ErrorChecker(ast, s)
-            checker.traverse()
-            del checker
+            self.step_four(ast, s)
 
             # Step Five: Resolve constant expressions
-            comp = ComputationHandler(ast)
-            comp.traverse()
-            del comp
+            self.step_five(ast)
+
+            # ast.context.debug_print()
 
             # Step Six: Transpile the AST into OpenQASM
-            transpiler = Transpiler(s)
-            transpiler.transpile()
+            programs, gates = self.step_six(s)
 
             # Step Seven: Output the generated code
-            files = Output.generate_output(transpiler.programs, transpiler.gates)
-            for name, code in files:
-                # Print the region if it was specified in --stdout
-                if name in self.regions_to_stdout:
-                    print(code)
-                # If the user defined a custom name for the region output, use that
-                if name in self.region_file_map.keys():
-                    file_name = self.region_file_map[name]
-                else:
-                    if not self.save_all_by_default:
-                        continue
-                    file_name = name
-                # Create build folder path if it does not already exist
-                Path(self.output_folder).mkdir(parents=True, exist_ok=True)
-                # Write the code
-                write_out = open(self.output_folder + "/" + file_name + ".qasm", mode="w")
-                write_out.write(code)
+            self.step_seven(programs, gates)
+
         except CompilerError as e:
             print(e)
             exit(1)

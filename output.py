@@ -11,9 +11,10 @@ include "qelib1.inc";
         for name in programs.keys():
             program = programs[name]
             comment_header = "// Program: " + name + ", " + str(program.qubits) + " qubits\n" + Output.program_header
-            for n in gates.keys():
-                gate = gates[n]
-                comment_header += gate.emit() +"\n"
+            gates_required = {k: v for k, v in gates.items() if k in program.dependencies}
+            for n in gates_required.keys():
+                gate = gates_required[n]
+                comment_header += gate.emit() + "\n"
             program = comment_header + program.emit()
             files.append((name, program))
         return files

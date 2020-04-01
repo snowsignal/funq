@@ -1,6 +1,9 @@
 from payloads import *
 
 class StandardLibrary:
+    """
+    A static registry of functions that are standard across all Funq programs.
+    """
     functions = {
         "hadamard": "h",
         "cx": "cx",
@@ -22,9 +25,9 @@ class StandardLibrary:
         "z": [("target", "Q")],
         "swap": [("first", "Q"), ("second", "Q")],
         "ccx": [("control1", "Q"), ("control2", "Q"), ("target", "Q")],
-        "rx": [("rotation", "C"), ("target", "Q")],
-        "ry": [("rotation", "C"), ("target", "Q")],
-        "rz": [("rotation", "C"), ("target", "Q")]
+        "rx": [("rotation", "Const"), ("target", "Q")],
+        "ry": [("rotation", "Const"), ("target", "Q")],
+        "rz": [("rotation", "Const"), ("target", "Q")]
     }
 
     @staticmethod

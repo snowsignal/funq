@@ -11,11 +11,13 @@ region: "region" r_ident "<" uint ">" block
 SINGLE_COMMENT: "//" /[^\n]/*
 %ignore SINGLE_COMMENT
 
-// A function is a series of transformations performed on a function
+// A function is a series of transformations performed on a qubit or a group of qubits
 function_def: "func" f_ident "(" arg_list? ")" block
 
+// A function call is the execution of a specific function with a list of arguments provided
 function_call: f_ident "(" call_list ")"
 
+// A call list is a list of expressions within a function call
 call_list: expr ("," call_list)* | q_expr ("," call_list)*
 
 // The following three terminals are identifiers for regions, functions, and variables, respectively.
@@ -41,22 +43,33 @@ arg: v_ident ":" type
 // A block is a set of statements contained within brackets
 block: "{" stmt* "}"
 
-// A statement can either be a function call, declaration, return statement,
+// A statement can either be a function call, declaration, measurement,
+// or ‘if’ block
 stmt: (function_call | declaration | q_declaration | measurement ) ";" | if
 
+// Declaration of a classical variable (constant or register)
 declaration: type v_ident "=" (expr | c_lit)
 
+// Declaration of a quantum variable
 q_declaration: type v_ident "=" q_lit
 
+// A measurement statement tells the computer to measure a specific slice of a
+// quantum register into a classical register.
 measurement: v_ident "[" expr ":" "]" "<-" q_expr
 
+// A classical literal is the initialization statement of a classical register
 c_lit: "#" bit+
 
+// An expression is the top node of a mathematical statement
 expr: atomic | product | sum
 
+// An if statement defines a classical condition for a series of statements
 if: "if" b_expr block
 
+// A boolean expression, used within an if statement
 b_expr: eq | neq | greater | lesser
+
+// The next four rules define the types of comparisons that can exist in a boolean expression
 
 eq: expr "==" expr
 
@@ -66,7 +79,7 @@ greater: expr ">" expr
 
 lesser: expr "<" expr
 
-paren: "(" expr ")"
+// The next seven rules make up the mathematical expression grammar
 
 sum: product
      | add
@@ -82,12 +95,16 @@ div: product "/" atomic
 
 atomic: uint | v_ident | "(" sum ")" -> paren
 
+// An expression that produces a qubit (or a slice of qubits)
 q_expr: q_slice | q_index
 
+// A slice of a quantum register
 q_slice: v_ident "[" expr ":" expr "]"
 
+// A specific index of a quantum register
 q_index: v_ident "[" expr "]"
 
+// An initialization literal used in the definition of a quantum register
 q_lit: "^" bit+ "^"
 
 bit: ONE | ZERO

@@ -32,7 +32,7 @@ class AST:
 
     def add_function(self, name, scope):
         if name.name in self.functions:
-            scope.raise_compiler_error("F4", info=name)
+            scope.raise_compiler_error("F5", info=name)
         self.functions[name.name] = scope
 
     def add_region(self, name, scope):
@@ -91,7 +91,8 @@ class Scope:
         p = self.payload.__dict__ if self.payload is not None else {}
         print(" " * indents + self.data + ":<" + str(self.line) + "," + str(self.column) + ">(" + str(p) + ")")
         for child in self.sub_scopes:
-            child.debug_print(indents=indents+1)
+            if child is not None:
+                child.debug_print(indents=indents+1)
 
     # Create a child node with a given line, column, and payload.
     def create_sub_scope(self, line, column, payload=None):
@@ -107,7 +108,7 @@ class Scope:
             v_type.raise_compiler_error("T0", info=v_type.name)
         if name.name in self.var_identifiers.keys():
             if Types.is_quantum(v_type.name):
-                name.raise_compiler_error("Q2", info=name.name)
+                name.raise_compiler_error("Q1", info=name.name)
             else:
                 name.raise_compiler_error("C0", info=name.name)
         else:

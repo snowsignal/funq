@@ -1,4 +1,4 @@
-from scope import Scope, MEASUREMENT_QUBIT_NAME
+from scope import Scope
 from standard_library import StandardLibrary
 from qasm import *
 from state import State
@@ -19,7 +19,7 @@ class Transpiler:
             self.generate_gate(name, f[0], f[1], f[2])
         for name in self.regions.keys():
             r = self.regions[name]
-            self.generate_program(name, r[0], r[1], r[2])
+            self.generate_program(name, r[0], r[1], r[2], r[3])
 
     def visit_region(self, region):
         name = region.get_name().name
@@ -28,15 +28,13 @@ class Transpiler:
 
     def generate_gate(self, func_name, cargs, qargs, block):
         instructions = self.convert_to_instructions(block)
-        for c in cargs:
-            print(c.get_name().data)
         cargs = [c.get_name().name for c in cargs]
         qargs = [q.get_name().name for q in qargs]
         self.gates[func_name] = OpenQASMGate(func_name, cargs, qargs, instructions)
 
-    def generate_program(self, name, qubits, block, measurement_qubit_needed):
+    def generate_program(self, name, qubits, block, measurement_qubit_needed, dependencies):
         instructions = self.convert_to_instructions(block)
-        self.programs[name] = OpenQASMProgram(qubits, instructions, [], measurement_qubit_needed)
+        self.programs[name] = OpenQASMProgram(qubits, instructions, dependencies, measurement_qubit_needed)
 
     def convert_to_instructions(self, stmt: Scope) -> list:
         if stmt.data == "block":
@@ -109,7 +107,10 @@ class Transpiler:
 
 
 class OpenQASMProgram:
-    def __init__(self, qubits: int, instructions: list, dependencies: list, measurement_qubit_needed: bool):
+    """
+    Stores information for a complete OpenQASM program generated from a certain region.
+    """
+    def __init__(self, qubits: int, instructions: list, dependencies: set, measurement_qubit_needed: bool):
         self.qubits = qubits
         self.instructions = instructions
         self.dependencies = dependencies
@@ -129,8 +130,8 @@ class OpenQASMProgram:
 
 class OpenQASMGate:
     def __init__(self, name, cargs, qargs, instructions):
-        self.instructions = instructions
         self.name = name
+        self.instructions = instructions
         self.cargs = cargs
         self.qargs = qargs
 
@@ -138,7 +139,7 @@ class OpenQASMGate:
         self.instructions += instructions
 
     def emit(self):
-        header = "gate " + self.name + " (" + ",".join(self.cargs) + ") " + ",".join(self.qargs) + "{\n"
-        body = "".join([instruction.emit() for instruction in self.instructions])
-        tail = "\n}"
+        header = "gate " + self.name + " (" + ",".join(self.cargs) + ") " + ",".join(self.qargs) + "{\n  "
+        body = "  ".join([instruction.emit() for instruction in self.instructions])
+        tail = "}"
         return header + body + tail

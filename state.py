@@ -21,13 +21,25 @@ class State:
         else:
             self.functions[name] = (classical_args, quantum_args, block)
 
+    def find_dependencies(self, scope) -> set:
+        dependencies = set()
+        for stmt in scope.children:
+            if stmt.data == "function_call":
+                name = stmt.get_name().name
+                if not StandardLibrary.is_standard(name):
+                    dependencies.add(name)
+            elif stmt.data == "if":
+                dependencies = dependencies.union(self.find_dependencies(stmt.get_block()))
+        return dependencies
+
     def register_region(self, name, scope):
         qubits: int = scope.get_qubit_cap()
         block = scope.get_block()
+        dependencies = self.find_dependencies(block)
         if name in self.regions:
             raise Exception("Region was already declared.")
         else:
-            self.regions[name] = (qubits, block, self.ast.does_region_need_measurement_qubit(name))
+            self.regions[name] = (qubits, block, self.ast.does_region_need_measurement_qubit(name), dependencies)
 
     def get_arguments_for(self, function_name):
         if function_name.name in self.functions.keys():

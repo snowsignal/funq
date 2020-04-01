@@ -23,20 +23,17 @@ Expected type '" + x[2] + "', got '" + x[3] + "'",
         + "'. Note that it is possible the limit was surpassed because you initialized at least one non-zero classical "
         + "register, which requires one qubit",
         "C0": lambda x: "Classical variable name '" + x + "' is identical to a previously declared variable",
-        "C2": lambda _: "Classical registers must be initialized with a byte-array statement, not a constant value",
         "C3": lambda x: "Classical variable slice indexes '" + str(x[0]) + "' to '" + str(x[1]) + "' are out of bounds",
         "C4": lambda _: "Expected classical type in classical variable declaration",
         "C5": lambda _: "Classical expression does not match variable type",
         "C6": lambda _: "Cannot perform operation on classical register",
-        "C7": lambda _: "Classical register with a non-zero initialization requires one qubit. This goes over \
-the region limit",
         "Q0": lambda _: "Expected quantum register type in quantum variable declaration",
         "Q1": lambda x: "Quantum variable name '" + x + "' is identical to a previously declared variable",
         "Q2": lambda x: "Quantum variable slice indexes '" + str(x[0]) + "' to '" + str(x[1]) + "' are out of bounds",
         "Q3": lambda x: "Quantum variable index '" + str(x) + "' is out of bounds",
         "Q5": lambda _: "Quantum variable has already been measured, and cannot be measured again",
         "Q6": lambda _: "Quantum variable cannot be used after being measured",
-        "Q7": lambda _: "Cannot perform operation on quantum variable",
+        "Q7": lambda _: "Cannot perform classical operation on quantum variable",
     }
 
     @staticmethod
@@ -52,7 +49,8 @@ the region limit",
 class CompilerError(Exception):
     """
     A specific type of exception that represents an error that occurs as a result of invalid language use.
-    Since all errors come from a certain element of the input code, each error will have a
+    Since all errors come from a certain element of the input code, each error will have a specific line
+    and column of occurrence.
     """
     def __init__(self, error_code, line, column, info=""):
         super().__init__()
