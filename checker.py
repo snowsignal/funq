@@ -30,6 +30,8 @@ class ErrorChecker(Visitor):
         self.current_function = ""
         # measured_variables keeps track of what quantum variables have been measured. This is reset after each region.
         self.measured_variables = []
+        # quantum_var_sizes keeps track of sizes of quantum variables that exist at any given time
+        self.quantum_var_sizes = {}
 
     def verify_arg_types(self, arguments):
         """ Verify that a function's arguments are not register values"""
@@ -54,14 +56,21 @@ class ErrorChecker(Visitor):
         self.in_region = False
         self.measured_variables = []
 
+    def after_visit_block(self, scope):
+        for var_name in scope.var_identifiers:
+            if var_name in self.quantum_var_sizes:
+                del self.quantum_var_sizes[var_name]
+
     def visit_q_decl(self, scope):
         if not self.in_region:
             scope.raise_compiler_error("F0")
         t = scope.get_type()
+        name = scope.get_name().name
         if not Types.is_quantum(t.name) or not Types.is_register(t.name):
             t.raise_compiler_error("Q0")
         length = scope.get_length()
         self.region_counter += length
+        self.quantum_var_sizes[name] = length
         if self.region_counter > self.qubit_max:
             if self.ast.does_region_need_measurement_qubit(self.current_region):
                 scope.raise_compiler_error("R1N", info=(scope.get_name().name, self.current_region))
@@ -81,6 +90,20 @@ class ErrorChecker(Visitor):
             expr.raise_compiler_error("C5")
         elif Types.is_register(t.name) and not expr.data == "c_lit":
             expr.raise_compiler_error("C5")
+
+    def visit_q_slice(self, scope):
+        name = scope.get_name().name
+        size = self.quantum_var_sizes[name]
+        start, end = scope.get_start_end()
+        if start > size - 1 or end > size - 1:
+            scope.raise_compiler_error("Q2", info=(start, end))
+
+    def visit_q_index(self, scope):
+        name = scope.get_name().name
+        size = self.quantum_var_sizes[name]
+        pos = scope.get_pos()
+        if pos > size - 1:
+            scope.raise_compiler_error("Q3", info=pos)
 
     def visit_measurement(self, scope):
         if not self.in_region:
