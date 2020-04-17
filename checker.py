@@ -151,9 +151,15 @@ class ErrorChecker(Visitor):
         call_args = scope.get_call_list().get_arguments()
         if len(call_args) != len(args):
             scope.raise_compiler_error("F2")
+        has_slice = False
         for (i, c_arg) in enumerate(call_args):
             if args[i][1] != c_arg.get_type_name():
                 c_arg.raise_compiler_error("F3", info=(args[i][0], name.name, args[i][1], c_arg.get_type_name()))
+            if c_arg.data == "q_slice":
+                if has_slice:
+                    c_arg.raise_compiler_error("F9")
+                else:
+                    has_slice = True
 
     def visit_v_ident(self, scope):
         if scope.name in self.measured_variables:

@@ -17,6 +17,7 @@ Expected type '" + x[2] + "', got '" + x[3] + "'",
         "F6": lambda _: "Type of function argument can only be a constant or qubit",
         "F7": lambda x: "At least one quantum argument is required for function '" + x + "'",
         "F8": lambda x: "Function '" + x + "' is not defined",
+        "F9": lambda _: "Function call cannot have more than one slice",
         "R0": lambda x: "Region name '" + x + "' is identical to a previously declared region name",
         "R1": lambda x: "Quantum variable '" + x[0] + "' allocates more qubits than allowed by the region '" + x[1] + "'",
         "R1N": lambda x: "Quantum variable '" + x[0] + "' allocates more qubits than allowed by the region '" + x[1]
