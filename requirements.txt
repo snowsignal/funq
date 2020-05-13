@@ -1,1 +1,1 @@
-lark-parser>=0.8.2
+lark-parser>=0.8.5
