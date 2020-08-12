@@ -125,7 +125,7 @@ the quantum register and store it in the classical register, starting at index 0
 
 ### Running the compiled OpenQASM
 
-Valid OpenQASM code can be run directly on [IBM's website](quantum-computing.ibm.com).
+Valid OpenQASM code can be run directly on [IBM's website](https://quantum-computing.ibm.com).
 Register for an account, go to Circuit Composer, create a new circuit, go to the code
 tab, and paste in the generated code. Please note that the website's transpiler does
 not fully adhere to the OpenQASM language specification, so errors may occur
