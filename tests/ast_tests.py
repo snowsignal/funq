@@ -1,5 +1,4 @@
 import unittest
-from ast_builder import ASTBuilder
 from input_parser import parse
 
 
@@ -12,7 +11,6 @@ class TestASTBuild(unittest.TestCase):
         tree = parse(self.contents_for_test)
         # Perform verification on the tree
         self.assertTrue(len(tree.children) == 1)
-        ast = ASTBuilder(tree).ast
 
 if __name__ == "__main__":
     unittest.main()

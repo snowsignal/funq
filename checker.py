@@ -1,5 +1,4 @@
 from visitor import Visitor
-from errors import CompilerError
 from builtin_types import Types
 
 

@@ -1,6 +1,6 @@
-from scope import Scope
+from qasm import CRegArgument, ClassicalInitialization, Comparison, FunctionCall, IfInstruction, MeasurementInstruction, QuantumIndexArgument, QuantumInitialization, QuantumRegArgument, QuantumSliceArgument, UIntArgument
+from scope import MEASUREMENT_QUBIT_NAME, Scope
 from standard_library import StandardLibrary
-from qasm import *
 from state import State
 
 

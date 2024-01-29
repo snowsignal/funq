@@ -1,4 +1,3 @@
-from payloads import *
 
 class StandardLibrary:
     """

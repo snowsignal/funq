@@ -1,6 +1,6 @@
 from lark import Token, Tree
+from payloads import ArgListPayload, ArgPayload, AssignmentPayload, BitPayload, BlockPayload, BoolOpPayload, CallListPayload, ClassicalDeclarationPayload, ClassicalLiteralPayload, FIdentPayload, FunctionCallPayload, FunctionPayload, IfPayload, MeasurementPayload, OpPayload, QuantumDeclarationPayload, QuantumIndexPayload, QuantumLiteralPayload, QuantumSlicePayload, RIdentPayload, RegionPayload, TypePayload, UIntPayload, VIdentPayload
 from scope import AST
-from payloads import *
 from visitor import Visitor
 from math import ceil
 
