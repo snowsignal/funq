@@ -68,4 +68,3 @@ class Transformer(TreeTraversal):
             return func(t)
         except (AttributeError, TypeError):
             return t
-

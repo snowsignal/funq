@@ -1,4 +1,16 @@
-from qasm import CRegArgument, ClassicalInitialization, Comparison, FunctionCall, IfInstruction, MeasurementInstruction, QuantumIndexArgument, QuantumInitialization, QuantumRegArgument, QuantumSliceArgument, UIntArgument
+from qasm import (
+    CRegArgument,
+    ClassicalInitialization,
+    Comparison,
+    FunctionCall,
+    IfInstruction,
+    MeasurementInstruction,
+    QuantumIndexArgument,
+    QuantumInitialization,
+    QuantumRegArgument,
+    QuantumSliceArgument,
+    UIntArgument,
+)
 from scope import MEASUREMENT_QUBIT_NAME, Scope
 from standard_library import StandardLibrary
 from state import State
@@ -32,9 +44,13 @@ class Transpiler:
         qargs = [q.get_name().name for q in qargs]
         self.gates[func_name] = OpenQASMGate(func_name, cargs, qargs, instructions)
 
-    def generate_program(self, name, qubits, block, measurement_qubit_needed, dependencies):
+    def generate_program(
+        self, name, qubits, block, measurement_qubit_needed, dependencies
+    ):
         instructions = self.convert_to_instructions(block)
-        self.programs[name] = OpenQASMProgram(qubits, instructions, dependencies, measurement_qubit_needed)
+        self.programs[name] = OpenQASMProgram(
+            qubits, instructions, dependencies, measurement_qubit_needed
+        )
 
     def convert_to_instructions(self, stmt: Scope) -> list:
         if stmt.data == "block":
@@ -43,13 +59,23 @@ class Transpiler:
                 instructions += self.convert_to_instructions(s)
             return instructions
         elif stmt.data == "function_call":
-            cargs = [self.convert_classical_arg(c)
-                     for c in stmt.get_call_list().get_classical_arguments()]
-            qargs = [self.convert_quantum_arg(q)
-                     for q in stmt.get_call_list().get_quantum_arguments()]
+            cargs = [
+                self.convert_classical_arg(c)
+                for c in stmt.get_call_list().get_classical_arguments()
+            ]
+            qargs = [
+                self.convert_quantum_arg(q)
+                for q in stmt.get_call_list().get_quantum_arguments()
+            ]
             # Is this in the standard library?
             if StandardLibrary.is_standard(stmt.get_name().name):
-                return [FunctionCall(StandardLibrary.get_standard_name(stmt.get_name().name), cargs, qargs)]
+                return [
+                    FunctionCall(
+                        StandardLibrary.get_standard_name(stmt.get_name().name),
+                        cargs,
+                        qargs,
+                    )
+                ]
             else:
                 return [FunctionCall(stmt.get_name().name, cargs, qargs)]
         elif stmt.data == "if":
@@ -110,7 +136,14 @@ class OpenQASMProgram:
     """
     Stores information for a complete OpenQASM program generated from a certain region.
     """
-    def __init__(self, qubits: int, instructions: list, dependencies: set, measurement_qubit_needed: bool):
+
+    def __init__(
+        self,
+        qubits: int,
+        instructions: list,
+        dependencies: set,
+        measurement_qubit_needed: bool,
+    ):
         self.qubits = qubits
         self.instructions = instructions
         self.dependencies = dependencies
@@ -139,7 +172,15 @@ class OpenQASMGate:
         self.instructions += instructions
 
     def emit(self):
-        header = "gate " + self.name + " (" + ",".join(self.cargs) + ") " + ",".join(self.qargs) + "{\n  "
+        header = (
+            "gate "
+            + self.name
+            + " ("
+            + ",".join(self.cargs)
+            + ") "
+            + ",".join(self.qargs)
+            + "{\n  "
+        )
         body = "  ".join([instruction.emit() for instruction in self.instructions])
         tail = "}"
         return header + body + tail

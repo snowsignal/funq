@@ -1,6 +1,7 @@
 from visitor import Visitor
 from builtin_types import Types
 
+
 # The Resolver transforms expressions and resolves types of identifiers
 class Resolver(Visitor):
     def __init__(self, ast):

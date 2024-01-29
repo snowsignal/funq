@@ -1,5 +1,6 @@
 from scope import MEASUREMENT_QUBIT_NAME
 
+
 class InstructionArgument:
     def __init__(self, arg_type):
         self.arg_type = arg_type
@@ -88,7 +89,7 @@ class FunctionCall(Instruction):
         if len(self.cargs) == 0:
             header = func + " "
         else:
-            header = func + "(" + ','.join([c.emit() for c in self.cargs]) + ") "
+            header = func + "(" + ",".join([c.emit() for c in self.cargs]) + ") "
         should_repeat = False
         var_to_repeat = None
         for q in self.qargs:
@@ -155,8 +156,10 @@ class IfInstruction(Instruction):
                 return ""
         else:
             instructions = self.emit_sub_instructions().split("\n")
-            for i in range(0, len(instructions)-1):
-                instructions[i] = "if (" + self.comparison.emit() + ") " + instructions[i]
+            for i in range(0, len(instructions) - 1):
+                instructions[i] = (
+                    "if (" + self.comparison.emit() + ") " + instructions[i]
+                )
             return "\n".join(instructions)
 
 
@@ -186,8 +189,19 @@ class ClassicalInitialization(Instruction):
         self.bits = bits
 
     def measure_one(self, i):
-        return "x " + MEASUREMENT_QUBIT_NAME + "[0];\nmeasure " + MEASUREMENT_QUBIT_NAME + \
-               "[0] -> " + self.name + "[" + str(i) + "];\nreset " + MEASUREMENT_QUBIT_NAME + ";\n"
+        return (
+            "x "
+            + MEASUREMENT_QUBIT_NAME
+            + "[0];\nmeasure "
+            + MEASUREMENT_QUBIT_NAME
+            + "[0] -> "
+            + self.name
+            + "["
+            + str(i)
+            + "];\nreset "
+            + MEASUREMENT_QUBIT_NAME
+            + ";\n"
+        )
 
     def emit(self) -> str:
         emission = "creg " + self.name + "[" + str(self.size) + "];\n"
@@ -210,5 +224,15 @@ class MeasurementInstruction(Instruction):
         emission = ""
         length = self.q_end - self.q_start + 1
         for i in range(0, length):
-            emission += "measure " + self.q_name + "[" + str(self.q_start + i) + "] -> " + self.r_name + "[" + str(self.start + i) + "];\n"
+            emission += (
+                "measure "
+                + self.q_name
+                + "["
+                + str(self.q_start + i)
+                + "] -> "
+                + self.r_name
+                + "["
+                + str(self.start + i)
+                + "];\n"
+            )
         return emission

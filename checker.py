@@ -8,6 +8,7 @@ class ErrorChecker(Visitor):
     When calling the traverse() method, exceptions will be raised if the checker finds
     invalid code.
     """
+
     def __init__(self, ast, state):
         ast.go_to_top()
         super().__init__(ast.context)
@@ -33,13 +34,13 @@ class ErrorChecker(Visitor):
         self.quantum_var_sizes = {}
 
     def verify_arg_types(self, arguments):
-        """ Verify that a function's arguments are not register values"""
+        """Verify that a function's arguments are not register values"""
         for arg in arguments.get_arguments():
             if Types.is_register(arg.get_type().name):
                 arg.get_type().raise_compiler_error("F6")
 
     def verify_one_quantum_arg(self, arguments):
-        """ Verify that a function has at least one quantum argument"""
+        """Verify that a function has at least one quantum argument"""
         for arg in arguments.get_arguments():
             if Types.is_quantum(arg.get_type().name):
                 return
@@ -48,7 +49,9 @@ class ErrorChecker(Visitor):
     def visit_region(self, scope):
         self.in_region = True
         self.current_region = scope.get_name().name
-        self.region_counter = 1 if self.ast.does_region_need_measurement_qubit(self.current_region) else 0
+        self.region_counter = (
+            1 if self.ast.does_region_need_measurement_qubit(self.current_region) else 0
+        )
         self.qubit_max = scope.get_qubit_cap()
 
     def after_visit_region(self, _):
@@ -72,9 +75,13 @@ class ErrorChecker(Visitor):
         self.quantum_var_sizes[name] = length
         if self.region_counter > self.qubit_max:
             if self.ast.does_region_need_measurement_qubit(self.current_region):
-                scope.raise_compiler_error("R1N", info=(scope.get_name().name, self.current_region))
+                scope.raise_compiler_error(
+                    "R1N", info=(scope.get_name().name, self.current_region)
+                )
             else:
-                scope.raise_compiler_error("R1", info=(scope.get_name().name, self.current_region))
+                scope.raise_compiler_error(
+                    "R1", info=(scope.get_name().name, self.current_region)
+                )
 
     def visit_c_decl(self, scope):
         if not self.in_region:
@@ -151,9 +158,12 @@ class ErrorChecker(Visitor):
         if len(call_args) != len(args):
             scope.raise_compiler_error("F2")
         has_slice = False
-        for (i, c_arg) in enumerate(call_args):
+        for i, c_arg in enumerate(call_args):
             if args[i][1] != c_arg.get_type_name():
-                c_arg.raise_compiler_error("F3", info=(args[i][0], name.name, args[i][1], c_arg.get_type_name()))
+                c_arg.raise_compiler_error(
+                    "F3",
+                    info=(args[i][0], name.name, args[i][1], c_arg.get_type_name()),
+                )
             if c_arg.data == "q_slice":
                 if has_slice:
                     c_arg.raise_compiler_error("F9")

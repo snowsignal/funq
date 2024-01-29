@@ -5,6 +5,7 @@ from builtin_types import Types
 # This is the name of the qubit register used to initialize classical registers with known values.
 MEASUREMENT_QUBIT_NAME = "cregmbit"
 
+
 class AST:
     def __init__(self):
         self.top_level_scope = Scope(1, 1)
@@ -55,10 +56,13 @@ class Scope:
     Scope has defined attributes for 'data' and 'children' so it is compatible
     with the traversal algorithms used in Visitor and Transformer.
     """
+
     # A global identifier counter, incremented each time a new Scope is initialized
     uid = 0
 
-    def __init__(self, line: int, column: int, scope_payload: Payload = None, super_scope=None):
+    def __init__(
+        self, line: int, column: int, scope_payload: Payload = None, super_scope=None
+    ):
         self.line = line
         self.column = column
         self.var_identifiers = {}
@@ -89,10 +93,20 @@ class Scope:
     # Used for internal debugging work
     def debug_print(self, indents=0):
         p = self.payload.__dict__ if self.payload is not None else {}
-        print(" " * indents + self.data + ":<" + str(self.line) + "," + str(self.column) + ">(" + str(p) + ")")
+        print(
+            " " * indents
+            + self.data
+            + ":<"
+            + str(self.line)
+            + ","
+            + str(self.column)
+            + ">("
+            + str(p)
+            + ")"
+        )
         for child in self.sub_scopes:
             if child is not None:
-                child.debug_print(indents=indents+1)
+                child.debug_print(indents=indents + 1)
 
     # Create a child node with a given line, column, and payload.
     def create_sub_scope(self, line, column, payload=None):

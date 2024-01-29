@@ -6,6 +6,7 @@ class Types:
     - The qubit type (Q)
     - The quantum register type (Q[])
     """
+
     classical_types = ["Const", "C[]"]
     quantum_types = ["Q", "Q[]"]
     registers = ["C[]", "Q[]"]
@@ -13,6 +14,7 @@ class Types:
     """
     This checks that the typename passed is a classical type
     """
+
     @staticmethod
     def is_classical(typename):
         return typename in Types.classical_types
@@ -20,6 +22,7 @@ class Types:
     """
     This checks that the typename passed is a quantum type.
     """
+
     @staticmethod
     def is_quantum(typename):
         return typename in Types.quantum_types
@@ -28,6 +31,7 @@ class Types:
     This checks that the typename passed is a register type.
     This means it cannot be used as a function parameter.
     """
+
     @staticmethod
     def is_register(typename):
         return typename in Types.registers
@@ -35,6 +39,7 @@ class Types:
     """
     This checks that the typename passed is valid (either a classical or quantum type).
     """
+
     @staticmethod
     def is_valid(typename):
         return Types.is_classical(typename) or Types.is_quantum(typename)

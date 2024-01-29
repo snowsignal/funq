@@ -1,5 +1,6 @@
 from standard_library import StandardLibrary
 
+
 class State:
     def __init__(self, ast):
         self.ast = ast
@@ -29,7 +30,9 @@ class State:
                 if not StandardLibrary.is_standard(name):
                     dependencies.add(name)
             elif stmt.data == "if":
-                dependencies = dependencies.union(self.find_dependencies(stmt.get_block()))
+                dependencies = dependencies.union(
+                    self.find_dependencies(stmt.get_block())
+                )
         return dependencies
 
     def register_region(self, name, scope):
@@ -39,7 +42,12 @@ class State:
         if name in self.regions:
             raise Exception("Region was already declared.")
         else:
-            self.regions[name] = (qubits, block, self.ast.does_region_need_measurement_qubit(name), dependencies)
+            self.regions[name] = (
+                qubits,
+                block,
+                self.ast.does_region_need_measurement_qubit(name),
+                dependencies,
+            )
 
     def get_arguments_for(self, function_name):
         if function_name.name in self.functions.keys():

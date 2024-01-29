@@ -12,6 +12,7 @@ class ComputationHandler(Transformer):
     expressions that add, subtract, multiply, and divide constant numbers, replacing those expressions in the tree with
     a single numeric value.
     """
+
     def __init__(self, ast):
         ast.go_to_top()
         super().__init__(ast.context)
@@ -46,16 +47,20 @@ class ComputationHandler(Transformer):
                 "+": operator.add,
                 "-": operator.sub,
                 "*": operator.mul,
-                "/": operator.floordiv
+                "/": operator.floordiv,
             }[op]
-            return operation(self.evaluate_expression(arg1), self.evaluate_expression(arg2))
+            return operation(
+                self.evaluate_expression(arg1), self.evaluate_expression(arg2)
+            )
 
     def transform_c_decl(self, scope):
         if not self.in_region:
             return scope
         if scope.get_type().name == "Const":
             expr = scope.get_expression()
-            scope.set_classical_value(scope.get_name().name, self.evaluate_expression(expr))
+            scope.set_classical_value(
+                scope.get_name().name, self.evaluate_expression(expr)
+            )
             return None
         else:
             return scope
@@ -65,7 +70,12 @@ class ComputationHandler(Transformer):
             return scope
         if self.is_const(scope):
             value = scope.get_classical_value(scope.name)
-            s = Scope(scope.line, scope.column, scope_payload=UIntPayload(value), super_scope=scope.super_scope)
+            s = Scope(
+                scope.line,
+                scope.column,
+                scope_payload=UIntPayload(value),
+                super_scope=scope.super_scope,
+            )
             return s
         else:
             return scope
@@ -74,5 +84,10 @@ class ComputationHandler(Transformer):
         if not self.in_region:
             return scope
         value = self.evaluate_expression(scope)
-        s = Scope(scope.line, scope.column, scope_payload=UIntPayload(value), super_scope=scope.super_scope)
+        s = Scope(
+            scope.line,
+            scope.column,
+            scope_payload=UIntPayload(value),
+            super_scope=scope.super_scope,
+        )
         return s

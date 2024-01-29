@@ -1,8 +1,8 @@
-
 class StandardLibrary:
     """
     A static registry of functions that are standard across all Funq programs.
     """
+
     functions = {
         "hadamard": "h",
         "cx": "cx",
@@ -26,7 +26,7 @@ class StandardLibrary:
         "ccx": [("control1", "Q"), ("control2", "Q"), ("target", "Q")],
         "rx": [("rotation", "Const"), ("target", "Q")],
         "ry": [("rotation", "Const"), ("target", "Q")],
-        "rz": [("rotation", "Const"), ("target", "Q")]
+        "rz": [("rotation", "Const"), ("target", "Q")],
     }
 
     @staticmethod

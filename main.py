@@ -18,6 +18,7 @@ class CommandLineInterface:
     The CLI tells what parts of the compiler should run, and ends execution early if something fails. It also parses
     the arguments passed to the compiler and considers them when producing output.
     """
+
     help_screen = """
 Usage: <PROGRAM> <INPUT> [OPTIONS]
 where <INPUT> is a valid relative or absolute filename.
@@ -64,17 +65,22 @@ Options:
 
     def _load(self):
         if len(self.args) == 0:
-            self.interface_error("No input file specified\nUse '<PROGRAM> -h' for help.")
+            self.interface_error(
+                "No input file specified\nUse '<PROGRAM> -h' for help."
+            )
             return True
 
         def get_next_or_err(i, args, expected=""):
             if len(args) - 1 <= i:
-                self.interface_error("Unexpected end of arguments: expected <" + expected + ">")
+                self.interface_error(
+                    "Unexpected end of arguments: expected <" + expected + ">"
+                )
                 return False, None
             else:
-                return True, args[i+1]
+                return True, args[i + 1]
+
         skip_next = 0
-        for (i, arg) in enumerate(self.args):
+        for i, arg in enumerate(self.args):
             if i == 0 and arg != "-h" and arg != "--help":
                 # This HAS to be the input file
                 self.file_to_open = arg
@@ -96,9 +102,12 @@ Options:
                     return True
             elif arg == "-o" or arg == "--output":
                 skip_next = 2
-                if get_next_or_err(i, self.args, expected="REGION")[0] and get_next_or_err(i+1, self.args, expected="FILE")[0]:
+                if (
+                    get_next_or_err(i, self.args, expected="REGION")[0]
+                    and get_next_or_err(i + 1, self.args, expected="FILE")[0]
+                ):
                     r = get_next_or_err(i, self.args)[1]
-                    f = get_next_or_err(i+1, self.args)[1]
+                    f = get_next_or_err(i + 1, self.args)[1]
                     self.region_file_map[r] = f
                 else:
                     return True
@@ -197,7 +206,7 @@ Options:
         except UnexpectedCharacters as u:
             # Filter out tokens such as __ANON_1, etc.
             c_set = set(c for c in u.allowed if c[0:2] != "__")
-            c = CompilerError("S0", ceil(u.line/2), u.column, info=str(c_set))
+            c = CompilerError("S0", ceil(u.line / 2), u.column, info=str(c_set))
             print(c)
             exit(1)
         exit(0)
@@ -212,4 +221,3 @@ def run_application(arg_list: list) -> None:
 if __name__ == "__main__":
     args = argv[1:]
     run_application(args)
-

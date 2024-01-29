@@ -9,6 +9,7 @@ class Payload:
     of the language. Most payloads contain getter functions, which
     simplify the process of retrieving data from child nodes.
     """
+
     def __init__(self, p_type):
         self.type = p_type
         self.owning_scope = None

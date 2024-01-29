@@ -1,5 +1,30 @@
 from lark import Token, Tree
-from payloads import ArgListPayload, ArgPayload, AssignmentPayload, BitPayload, BlockPayload, BoolOpPayload, CallListPayload, ClassicalDeclarationPayload, ClassicalLiteralPayload, FIdentPayload, FunctionCallPayload, FunctionPayload, IfPayload, MeasurementPayload, OpPayload, QuantumDeclarationPayload, QuantumIndexPayload, QuantumLiteralPayload, QuantumSlicePayload, RIdentPayload, RegionPayload, TypePayload, UIntPayload, VIdentPayload
+from payloads import (
+    ArgListPayload,
+    ArgPayload,
+    AssignmentPayload,
+    BitPayload,
+    BlockPayload,
+    BoolOpPayload,
+    CallListPayload,
+    ClassicalDeclarationPayload,
+    ClassicalLiteralPayload,
+    FIdentPayload,
+    FunctionCallPayload,
+    FunctionPayload,
+    IfPayload,
+    MeasurementPayload,
+    OpPayload,
+    QuantumDeclarationPayload,
+    QuantumIndexPayload,
+    QuantumLiteralPayload,
+    QuantumSlicePayload,
+    RIdentPayload,
+    RegionPayload,
+    TypePayload,
+    UIntPayload,
+    VIdentPayload,
+)
 from scope import AST
 from visitor import Visitor
 from math import ceil
@@ -139,7 +164,10 @@ class ASTBuilder(Visitor):
         self.insert_new_scope_and_jump(t, payload=CallListPayload())
 
     def after_visit_call_list(self, _):
-        if self.ast.context.data == "call_list" and not self.ast.context.super_scope.data == "call_list":
+        if (
+            self.ast.context.data == "call_list"
+            and not self.ast.context.super_scope.data == "call_list"
+        ):
             self.ast.jump_super()
 
     def visit_arg(self, t):
@@ -149,7 +177,10 @@ class ASTBuilder(Visitor):
         self.ast.jump_super()
 
     def visit_arg_list(self, t):
-        if self.ast.context.super_scope.data == "arg_list" or self.ast.context.data == "arg_list":
+        if (
+            self.ast.context.super_scope.data == "arg_list"
+            or self.ast.context.data == "arg_list"
+        ):
             return
         self.insert_new_scope_and_jump(t, payload=ArgListPayload())
 

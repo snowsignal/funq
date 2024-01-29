@@ -9,7 +9,7 @@ def grammar() -> str:
         return "\n".join(f.readlines())
 
 
-PARSER = Lark(grammar(), parser='earley', propagate_positions=True, lexer="dynamic")
+PARSER = Lark(grammar(), parser="earley", propagate_positions=True, lexer="dynamic")
 
 
 def parse_file(f_name: str) -> Tree:
